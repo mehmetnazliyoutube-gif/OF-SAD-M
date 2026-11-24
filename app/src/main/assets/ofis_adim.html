@@ -1,0 +1,3467 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#4f46e5" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Ofis Adım — Canlı Yarış, Sohbet & Hediye</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: "#eef2ff",
+              100: "#e0e7ff",
+              500: "#6366f1",
+              600: "#4f46e5",
+              700: "#4338ca"
+            }
+          },
+          boxShadow: {
+            card: "0 8px 28px -6px rgba(15, 23, 42, 0.08), 0 2px 8px -2px rgba(15, 23, 42, 0.04)",
+            glow: "0 0 24px rgba(99, 102, 241, 0.35)"
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overscroll-behavior-y: contain;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    @keyframes walkBounce {
+      0%, 100% { transform: translateY(0px) rotate(-2deg); }
+      50% { transform: translateY(-4px) rotate(2deg); }
+    }
+    .animate-walk {
+      animation: walkBounce 0.9s ease-in-out infinite;
+    }
+    @keyframes pulsePop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+    .step-pop {
+      animation: pulsePop 0.3s ease-out;
+    }
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    .animate-float {
+      animation: floatSlow 2.6s ease-in-out infinite;
+    }
+    @keyframes giftPopIn {
+      0% { transform: scale(0.92); opacity: 0; }
+      65% { transform: scale(1.03); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .gift-bubble-anim {
+      animation: giftPopIn 0.35s ease-out;
+    }
+    .safe-pb {
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.4rem);
+    }
+    .safe-nav-pb {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900 antialiased selection:bg-indigo-200">
+  <!-- Konfeti Katmanı -->
+  <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50 w-full h-full"></canvas>
+
+  <!-- Toast Bildirim Alanı -->
+  <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Ana Mobil Uygulama Kapsayıcısı -->
+  <div class="min-h-screen max-w-md mx-auto bg-slate-50 shadow-2xl relative flex flex-col">
+
+    <!-- Üst Header -->
+    <header class="sticky top-0 z-30 bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-700 text-white px-4 pt-3.5 pb-3 shadow-md">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div id="header-avatar-slot" class="w-10 h-10 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+            <!-- SVG Karakter -->
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <h1 class="text-base font-black tracking-tight truncate">Ofis Adım</h1>
+              <span id="member-count-pill" class="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-extrabold whitespace-nowrap">
+                👥 1 Kişi
+              </span>
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] text-indigo-100/95">
+              <span id="header-date-label" class="truncate">Bugün</span>
+              <span>•</span>
+              <span id="header-room-badge" class="font-bold text-amber-200 truncate">🌐 GENEL</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 shrink-0">
+          <!-- Adım Altını Bakiyesi (Hediye için) -->
+          <button id="header-coins-pill" type="button" title="Adım Altınlarınla arkadaşlarına hediye gönder!" class="px-2.5 py-1 rounded-full bg-amber-400/25 hover:bg-amber-400/35 transition text-[11px] font-black text-amber-100 flex items-center gap-1 border border-amber-300/35 active:scale-95">
+            <span>🪙</span>
+            <span id="header-coins-value">300</span>
+          </button>
+          <div id="header-sync-pill" class="px-2 py-1 rounded-full bg-white/15 text-[10px] font-extrabold flex items-center gap-1 border border-white/20">
+            <span id="sync-dot" class="w-2 h-2 rounded-full bg-amber-300"></span>
+            <span id="sync-label" class="hidden sm:inline">Bağlanıyor</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- İçerik Alanı -->
+    <main class="flex-1 px-3.5 pt-3.5 safe-pb space-y-4">
+
+      <!-- ================================================================ -->
+      <!-- SEKME 1: CANLI YARIŞ & HAFTALIK ŞAMPİYONLUK                      -->
+      <!-- ================================================================ -->
+      <section id="tab-race" class="space-y-4">
+
+        <!-- Alt Sekme Seçici: Canlı Yarış / Haftalık Şampiyonluk -->
+        <div class="grid grid-cols-2 p-1 rounded-2xl bg-slate-200/80 gap-1">
+          <button id="subtab-daily-btn" type="button" class="py-2 px-3 rounded-xl text-xs font-extrabold transition bg-white text-indigo-700 shadow-sm">
+            🏃 Canlı Yarış
+          </button>
+          <button id="subtab-weekly-btn" type="button" class="py-2 px-3 rounded-xl text-xs font-extrabold transition text-slate-600 hover:text-slate-900">
+            🏆 Haftalık Şampiyonluk
+          </button>
+        </div>
+
+        <!-- GÜNLÜK CANLI YARIŞ GÖRÜNÜMÜ -->
+        <div id="race-daily-view" class="space-y-4">
+
+          <!-- Aktif 1v1 Düello Kartı (Varsa görünür) -->
+          <div id="active-duel-banner" class="hidden rounded-3xl bg-gradient-to-r from-rose-600 via-orange-500 to-amber-500 p-4 text-white shadow-card">
+            <!-- JS ile doldurulur -->
+          </div>
+
+          <!-- Canlı Yarış Pisti -->
+          <div class="rounded-3xl bg-white p-4 shadow-card border border-slate-100 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <h2 class="text-sm font-black text-slate-800 flex items-center gap-1.5">
+                  <span>🏁</span> Canlı Yarış Pisti
+                </h2>
+                <p id="track-subtitle" class="text-[11px] text-slate-500">
+                  Sisteme katılan herkes anlık pistte yarışıyor
+                </p>
+              </div>
+              <div class="text-right">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Toplam Adım</div>
+                <div id="team-total-steps" class="text-base font-black text-indigo-600">0</div>
+              </div>
+            </div>
+
+            <!-- Yarış Şeritleri -->
+            <div id="race-track-lanes" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-0.5">
+              <!-- JS ile doldurulur -->
+            </div>
+
+            <button id="toggle-all-lanes-btn" type="button" class="hidden w-full py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-extrabold transition">
+              Tüm Katılımcıları Pistte Göster
+            </button>
+          </div>
+
+          <!-- Benim Sıram Özet Şeridi -->
+          <div id="my-rank-banner" class="rounded-2xl bg-gradient-to-r from-indigo-50 via-violet-50 to-indigo-50 border border-indigo-200/80 px-3.5 py-2.5 flex items-center justify-between gap-2">
+            <!-- JS ile doldurulur -->
+          </div>
+
+          <!-- Hızlı Hediye & Sohbet Kısayol Şeridi -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <button id="race-open-chat-btn" type="button" class="rounded-2xl bg-white hover:bg-indigo-50/70 active:scale-[0.98] transition p-3 shadow-card border border-slate-100 flex items-center gap-2.5 text-left">
+              <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg shrink-0">💬</div>
+              <div class="min-w-0">
+                <div class="text-xs font-black text-slate-800 truncate">Grup Sohbeti</div>
+                <div id="race-chat-preview-count" class="text-[10px] font-bold text-indigo-600 truncate">Mesaj yaz & sohbet et</div>
+              </div>
+            </button>
+            <button id="race-open-gift-btn" type="button" class="rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 active:scale-[0.98] transition p-3 shadow-card text-white flex items-center gap-2.5 text-left">
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-lg shrink-0">🎁</div>
+              <div class="min-w-0">
+                <div class="text-xs font-black truncate">Hediye Gönder</div>
+                <div class="text-[10px] font-bold text-pink-100 truncate">Çay, kupa & sürpriz!</div>
+              </div>
+            </button>
+          </div>
+
+          <!-- Canlı Teşvik & Hediye Akışı -->
+          <div class="rounded-3xl bg-white p-3.5 shadow-card border border-slate-100 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-black text-slate-700 flex items-center gap-1.5">
+                <span>📣</span> Canlı Aktivite Akışı
+              </h3>
+              <button id="quick-cheer-all-btn" type="button" class="px-2.5 py-1 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] font-extrabold transition active:scale-95">
+                🔥 Herkesi Teşvik Et
+              </button>
+            </div>
+            <div id="cheers-feed" class="space-y-1.5 max-h-32 overflow-y-auto no-scrollbar">
+              <!-- JS ile doldurulur -->
+            </div>
+          </div>
+
+          <!-- Sınırsız Canlı Sıralama Listesi -->
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between gap-2 px-1">
+              <h2 class="text-sm font-black text-slate-800 flex items-center gap-1.5">
+                <span>📊</span> Canlı Sıralama
+                <span id="leaderboard-total-badge" class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-black">0 kişi</span>
+              </h2>
+              <button id="share-invite-btn" type="button" class="px-2.5 py-1 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[11px] font-extrabold transition active:scale-95">
+                ➕ Davet Et
+              </button>
+            </div>
+
+            <!-- Katılımcı Arama Kutusu -->
+            <div class="relative">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+              <input id="leaderboard-search-input" type="text" placeholder="Katılımcı ara (isim veya durum)..."
+                class="w-full pl-9 pr-9 py-2.5 rounded-2xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm" />
+              <button id="clear-search-btn" type="button" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-black">✕</button>
+            </div>
+
+            <div id="leaderboard-list" class="space-y-2.5">
+              <!-- JS ile doldurulur -->
+            </div>
+          </div>
+        </div>
+
+        <!-- HAFTALIK ŞAMPİYONLUK GÖRÜNÜMÜ -->
+        <div id="race-weekly-view" class="hidden space-y-4">
+          <!-- Haftanın İddiası Kartı -->
+          <div class="rounded-3xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-4 text-white shadow-card space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="px-2.5 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-wider">🎁 Haftanın Ödülü / İddiası</span>
+              <button id="edit-weekly-bet-btn" type="button" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-[11px] font-extrabold transition">
+                ✏️ Değiştir
+              </button>
+            </div>
+            <p id="weekly-bet-text" class="text-sm font-black leading-snug">
+              Haftanın birincisine ekipçe kahve + tatlı ısmarlıyoruz! ☕🍰
+            </p>
+            <div id="weekly-bet-editor" class="hidden pt-1 flex gap-2">
+              <input id="weekly-bet-input" type="text" maxlength="90" placeholder="Haftalık ödül veya iddia yazın..."
+                class="flex-1 px-3 py-2 rounded-xl bg-white/95 text-slate-900 text-xs font-bold focus:outline-none" />
+              <button id="save-weekly-bet-btn" type="button" class="px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-black">Kaydet</button>
+            </div>
+          </div>
+
+          <!-- 3'lü Şampiyonluk Kürsüsü -->
+          <div class="rounded-3xl bg-white p-4 shadow-card border border-slate-100">
+            <h2 class="text-sm font-black text-slate-800 text-center mb-4">🏆 Son 7 Gün Şampiyonluk Kürsüsü</h2>
+            <div id="weekly-podium" class="grid grid-cols-3 items-end gap-2 pt-2">
+              <!-- JS ile doldurulur -->
+            </div>
+          </div>
+
+          <!-- Haftalık Tam Sıralama -->
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between px-1">
+              <h3 class="text-sm font-black text-slate-800">📈 Haftalık Tüm Katılımcılar</h3>
+              <span id="weekly-member-count" class="text-[11px] font-bold text-slate-500">0 kişi</span>
+            </div>
+            <div id="weekly-list" class="space-y-2.5">
+              <!-- JS ile doldurulur -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- SEKME 2: CANLI GRUP SOHBETİ & HEDİYE GÖNDERME                    -->
+      <!-- ================================================================ -->
+      <section id="tab-chat" class="hidden space-y-3">
+        <!-- Sohbet Üst Başlık & Hediye Butonu -->
+        <div class="rounded-3xl bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 p-3.5 text-white shadow-card flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span class="text-base">💬</span>
+              <h2 class="text-sm font-black truncate">Canlı Ekip Sohbeti</h2>
+              <span id="chat-online-badge" class="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-black shrink-0">0 kişi</span>
+            </div>
+            <p class="text-[11px] text-indigo-100 mt-0.5 truncate">Mesajlaş, sohbet et, sürpriz hediye gönder!</p>
+          </div>
+          <button id="chat-top-gift-btn" type="button" class="px-3 py-2 rounded-2xl bg-gradient-to-r from-amber-300 to-yellow-300 hover:from-amber-200 hover:to-yellow-200 active:scale-95 transition text-slate-950 text-xs font-black shrink-0 shadow-md flex items-center gap-1">
+            <span>🎁</span>
+            <span>Hediye</span>
+          </button>
+        </div>
+
+        <!-- Hızlı Sohbet Mesajları Şeridi -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <button type="button" data-quick-chat="☕ Çay / kahve molası yürüyüşüne kim geliyor?" class="quick-chat-btn px-3 py-1.5 rounded-full bg-white border border-slate-200 hover:border-indigo-300 text-slate-700 text-[11px] font-extrabold whitespace-nowrap shadow-sm active:scale-95 transition">☕ Çay yürüyüşü?</button>
+          <button type="button" data-quick-chat="🔥 Harika tempo ekip, durmak yok!" class="quick-chat-btn px-3 py-1.5 rounded-full bg-white border border-slate-200 hover:border-indigo-300 text-slate-700 text-[11px] font-extrabold whitespace-nowrap shadow-sm active:scale-95 transition">🔥 Harika tempo!</button>
+          <button type="button" data-quick-chat="🏃 Öğle arası 10 dakika yürüyüş yapalım mı?" class="quick-chat-btn px-3 py-1.5 rounded-full bg-white border border-slate-200 hover:border-indigo-300 text-slate-700 text-[11px] font-extrabold whitespace-nowrap shadow-sm active:scale-95 transition">🏃 Öğle yürüyüşü</button>
+          <button type="button" data-quick-chat="👑 Bugün liderliği almaya geliyorum!" class="quick-chat-btn px-3 py-1.5 rounded-full bg-white border border-slate-200 hover:border-indigo-300 text-slate-700 text-[11px] font-extrabold whitespace-nowrap shadow-sm active:scale-95 transition">👑 Liderlik bende!</button>
+        </div>
+
+        <!-- Mesaj & Hediye Akış Penceresi -->
+        <div class="rounded-3xl bg-white shadow-card border border-slate-100 flex flex-col overflow-hidden">
+          <div id="chat-messages-list" class="p-3.5 space-y-3 h-[48vh] min-h-[310px] max-h-[470px] overflow-y-auto bg-slate-50/70">
+            <!-- JS ile doldurulur -->
+          </div>
+
+          <!-- Mesaj Yazma Çubuğu -->
+          <form id="chat-form" class="p-2.5 bg-white border-t border-slate-100 flex items-center gap-2">
+            <button id="chat-bar-gift-btn" type="button" title="Hediye Gönder" class="w-10 h-10 rounded-2xl bg-pink-50 hover:bg-pink-100 active:scale-95 transition text-pink-600 text-lg flex items-center justify-center shrink-0 border border-pink-200">
+              🎁
+            </button>
+            <input id="chat-message-input" type="text" maxlength="220" autocomplete="off" placeholder="Katılımcılara mesaj yaz..."
+              class="flex-1 px-3.5 py-2.5 rounded-2xl bg-slate-100 border border-slate-200/80 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-400" />
+            <button type="submit" class="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition text-white text-xs font-black shrink-0 shadow-sm">
+              Gönder
+            </button>
+          </form>
+        </div>
+
+        <!-- Alt Bilgi: Adım Altını Kazanma İpucu -->
+        <div class="rounded-2xl bg-amber-50 border border-amber-200/80 px-3.5 py-2.5 flex items-center justify-between gap-2 text-[11px]">
+          <div class="text-amber-900 font-bold">
+            🪙 Her <strong>100 adım</strong> sana <strong>+10 Adım Altını</strong> kazandırır!
+          </div>
+          <span id="chat-coins-mini" class="px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-950 font-black shrink-0">300 🪙</span>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- SEKME 3: OTOMATİK ADIMSAYAR & ARKA PLAN KORUMASI                 -->
+      <!-- ================================================================ -->
+      <section id="tab-pedometer" class="hidden space-y-4">
+
+        <!-- Canlı Adım Halkası Kartı -->
+        <div class="rounded-3xl bg-white p-5 shadow-card border border-slate-100 text-center space-y-4">
+          <div class="flex items-center justify-between">
+            <span id="sensor-status-chip" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+              <span class="w-2 h-2 rounded-full bg-slate-400"></span> Başlatılıyor...
+            </span>
+            <span id="pedometer-goal-pill" class="text-[11px] font-extrabold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
+              Hedef: 8.000
+            </span>
+          </div>
+
+          <!-- SVG İlerleme Halkası -->
+          <div class="relative w-48 h-48 mx-auto flex items-center justify-center">
+            <svg class="w-full h-full -rotate-90" viewBox="0 0 180 180">
+              <circle cx="90" cy="90" r="76" fill="none" stroke="#e2e8f0" stroke-width="14" />
+              <circle id="step-ring-progress" cx="90" cy="90" r="76" fill="none" stroke="url(#stepRingGrad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="477.52" stroke-dashoffset="477.52" class="transition-all duration-500" />
+              <defs>
+                <linearGradient id="stepRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6366f1" />
+                  <stop offset="50%" stop-color="#8b5cf6" />
+                  <stop offset="100%" stop-color="#10b981" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Bugünkü Adım</span>
+              <div id="pedometer-step-count" class="text-4xl font-black text-slate-900 tracking-tight leading-none mt-1">0</div>
+              <div id="pedometer-percent-label" class="text-xs font-extrabold text-indigo-600 mt-1.5">%0 tamamlandı</div>
+              <div id="sensor-wave-dots" class="hidden items-center gap-1 mt-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style="animation-delay:0.15s"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style="animation-delay:0.3s"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alt Metrikler -->
+          <div class="grid grid-cols-3 gap-2 pt-1">
+            <div class="rounded-2xl bg-slate-50 p-2.5 border border-slate-100">
+              <div class="text-[10px] font-bold text-slate-400">MESAFE</div>
+              <div id="metric-km" class="text-sm font-black text-slate-800 mt-0.5">0.0 km</div>
+            </div>
+            <div class="rounded-2xl bg-slate-50 p-2.5 border border-slate-100">
+              <div class="text-[10px] font-bold text-slate-400">KALORİ</div>
+              <div id="metric-kcal" class="text-sm font-black text-orange-600 mt-0.5">0 kcal</div>
+            </div>
+            <div class="rounded-2xl bg-slate-50 p-2.5 border border-slate-100">
+              <div class="text-[10px] font-bold text-slate-400">SÜRE</div>
+              <div id="metric-mins" class="text-sm font-black text-emerald-600 mt-0.5">0 dk</div>
+            </div>
+          </div>
+
+          <!-- Canlı Hareket Sensörü Sinyal Çubuğu -->
+          <div class="rounded-2xl bg-slate-50 border border-slate-200/80 p-3 text-left space-y-2">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="font-extrabold text-slate-700">📡 Hareket Sensörü Sinyali</span>
+              <span id="sensor-signal-label" class="font-bold text-indigo-600">Bekleniyor...</span>
+            </div>
+            <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
+              <div id="sensor-signal-bar" class="h-full w-2 rounded-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-150"></div>
+            </div>
+            <p id="sensor-detail-text" class="text-[11px] text-slate-500">
+              Telefonun hareket sensörü otomatik başlatılıyor...
+            </p>
+          </div>
+
+          <!-- Sensör Ana Kontrol Butonu -->
+          <button id="toggle-sensor-btn" type="button" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-[0.98] transition text-white font-extrabold text-sm shadow-md shadow-indigo-500/25 flex items-center justify-center gap-2">
+            <span id="toggle-sensor-icon">📡</span>
+            <span id="toggle-sensor-label">Hareket Sensörünü Başlat</span>
+          </button>
+
+          <!-- Hassasiyet Ayarı -->
+          <div class="pt-1 text-left">
+            <div class="flex items-center justify-between text-[11px] font-bold text-slate-600 mb-1">
+              <span>🎛️ Adım Hassasiyeti</span>
+              <span id="sensitivity-label" class="text-indigo-600">Orta (Önerilen)</span>
+            </div>
+            <input id="sensitivity-slider" type="range" min="1" max="3" step="1" value="2" class="w-full accent-indigo-600" />
+          </div>
+        </div>
+
+        <!-- Arka Plan Çalışma & Pil Optimizasyonu Koruması Kartı -->
+        <div class="rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4 text-white shadow-card space-y-3">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h2 class="text-sm font-extrabold flex items-center gap-1.5 flex-wrap">
+                <span>🔋</span> Arka Plan & Pil Koruması
+                <span id="native-apk-badge" class="hidden px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/40 text-[10px] font-black">APK Donanım</span>
+              </h2>
+              <p id="bg-protection-subtitle" class="text-[11px] text-indigo-200/90 mt-0.5">
+                Ekran kapanınca ve başka uygulamaya geçince sayımı canlı tutar
+              </p>
+            </div>
+            <button id="toggle-bg-keepalive-btn" type="button" class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 transition text-slate-950 text-[11px] font-black shrink-0">
+              Açık ✓
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div class="rounded-2xl bg-white/10 p-2.5 border border-white/10">
+              <div class="text-indigo-200/80 text-[10px]">Arka Plan Motoru</div>
+              <div id="bg-worker-status" class="font-extrabold text-emerald-300 mt-0.5">Aktif ✓</div>
+            </div>
+            <div class="rounded-2xl bg-white/10 p-2.5 border border-white/10">
+              <div class="text-indigo-200/80 text-[10px]">Pil / Uyku Koruması</div>
+              <div id="wakelock-status" class="font-extrabold text-amber-300 mt-0.5">Hazır</div>
+            </div>
+          </div>
+
+          <button id="open-battery-guide-btn" type="button" class="w-full py-2.5 px-3 rounded-2xl bg-white/15 hover:bg-white/25 active:scale-[0.98] transition text-white text-xs font-extrabold flex items-center justify-center gap-1.5 border border-white/15">
+            <span>⚙️</span> Android Pil Optimizasyonu Ayar Rehberi
+          </button>
+        </div>
+
+        <!-- Hızlı Adım Ekle & Sağlık Uygulaması Eşitleme -->
+        <div class="rounded-3xl bg-white p-4 shadow-card border border-slate-100 space-y-3">
+          <h3 class="text-xs font-black text-slate-800">⚡ Hızlı Ekle & Sağlık Eşitleme</h3>
+          <div class="grid grid-cols-4 gap-2">
+            <button type="button" data-quick-add="10" class="quick-add-btn py-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 active:scale-95 transition text-indigo-700 font-black text-xs">+10</button>
+            <button type="button" data-quick-add="100" class="quick-add-btn py-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 active:scale-95 transition text-indigo-700 font-black text-xs">+100</button>
+            <button type="button" data-quick-add="500" class="quick-add-btn py-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 active:scale-95 transition text-indigo-700 font-black text-xs">+500</button>
+            <button type="button" data-quick-add="1000" class="quick-add-btn py-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 active:scale-95 transition text-emerald-700 font-black text-xs">+1000</button>
+          </div>
+          <div class="pt-1 border-t border-slate-100 flex gap-2">
+            <input id="manual-total-input" type="number" min="0" max="200000" placeholder="Samsung Health / Fit toplam adım..."
+              class="flex-1 px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            <button id="sync-manual-total-btn" type="button" class="px-4 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-95 transition text-white text-xs font-extrabold">
+              Eşitle
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- SEKME 4: GÖREVLER, SEVİYE & ŞANS ÇARKI                           -->
+      <!-- ================================================================ -->
+      <section id="tab-missions" class="hidden space-y-4">
+
+        <!-- Seviye & Ünvan Kartı -->
+        <div class="rounded-3xl bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 p-4 text-white shadow-card space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <div class="text-[10px] font-bold uppercase tracking-wider text-indigo-100">Ofis Rütben</div>
+              <div id="xp-rank-title" class="text-base font-black">🪑 Masa Başı Çaylağı</div>
+            </div>
+            <div class="text-right">
+              <div id="xp-level-badge" class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-black">Seviye 1</div>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="h-2.5 rounded-full bg-black/25 overflow-hidden">
+              <div id="xp-progress-bar" class="h-full rounded-full bg-gradient-to-r from-amber-300 to-emerald-300 transition-all duration-500" style="width: 10%"></div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-indigo-100 font-bold">
+              <span id="xp-points-label">0 XP</span>
+              <span id="xp-next-label">Sonraki rütbe: 200 XP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ofis Şans Çarkı -->
+        <div class="rounded-3xl bg-white p-4 shadow-card border border-slate-100 space-y-3">
+          <div>
+            <h2 class="text-sm font-black text-slate-800">🎡 Ofis Sürpriz Görev Çarkı</h2>
+            <p class="text-[11px] text-slate-500">Çevir, eğlenceli mini görevi yap; XP ve 🪙 Altın kap!</p>
+          </div>
+          <div id="wheel-result-box" class="rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 p-3.5 text-center space-y-2">
+            <div id="wheel-emoji" class="text-3xl">🎯</div>
+            <div id="wheel-text" class="text-xs font-extrabold text-slate-800">Çarkı çevirip günün sürpriz görevini belirle!</div>
+          </div>
+          <div class="flex gap-2">
+            <button id="spin-wheel-btn" type="button" class="flex-1 py-2.5 px-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-95 transition text-white text-xs font-black shadow-sm">
+              🎡 Çarkı Çevir
+            </button>
+            <button id="complete-wheel-btn" type="button" class="hidden flex-1 py-2.5 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition text-white text-xs font-black shadow-sm">
+              ✅ Yaptım (+120 XP & +50 🪙)
+            </button>
+          </div>
+        </div>
+
+        <!-- Günlük Otomatik Görevler -->
+        <div class="rounded-3xl bg-white p-4 shadow-card border border-slate-100 space-y-3">
+          <h2 class="text-sm font-black text-slate-800">📋 Günlük Adım Görevleri</h2>
+          <div id="daily-missions-list" class="space-y-2.5">
+            <!-- JS ile doldurulur -->
+          </div>
+        </div>
+
+        <!-- Kalk & Yap Mini Ofis Görevleri -->
+        <div class="rounded-3xl bg-white p-4 shadow-card border border-slate-100 space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-black text-slate-800">⚡ Kalk & Yap! Mini Görevler</h2>
+            <span class="text-[10px] font-bold text-slate-400">Günde 1 kez</span>
+          </div>
+          <div id="mini-missions-list" class="space-y-2.5">
+            <!-- JS ile doldurulur -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- SEKME 5: PROFİL (KARAKTERİM & ROZETLER / HEDİYE VİTRİNİM)        -->
+      <!-- ================================================================ -->
+      <section id="tab-profile" class="hidden space-y-4">
+
+        <!-- Alt Sekme Seçici: Karakterim / Rozet & Hediyelerim -->
+        <div class="grid grid-cols-2 p-1 rounded-2xl bg-slate-200/80 gap-1">
+          <button id="subtab-avatar-btn" type="button" class="py-2 px-3 rounded-xl text-xs font-extrabold transition bg-white text-indigo-700 shadow-sm">
+            🎨 Karakterim
+          </button>
+          <button id="subtab-rewards-btn" type="button" class="py-2 px-3 rounded-xl text-xs font-extrabold transition text-slate-600 hover:text-slate-900">
+            🎁 Hediyeler & Rozetler
+          </button>
+        </div>
+
+        <!-- ALT SEKME 5A: KARAKTER OLUŞTURUCU -->
+        <div id="profile-avatar-view" class="space-y-4">
+          <div class="rounded-3xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-5 shadow-card border border-indigo-100 text-center space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-indigo-700">🎨 Karakter Atölyesi</span>
+              <button id="randomize-avatar-btn" type="button" class="px-3 py-1.5 rounded-xl bg-white hover:bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-extrabold shadow-sm active:scale-95 transition">
+                🎲 Rastgele
+              </button>
+            </div>
+            <div id="avatar-editor-preview" class="w-32 h-32 mx-auto rounded-3xl bg-white shadow-inner border-2 border-indigo-100 flex items-center justify-center animate-float">
+              <!-- SVG Karakter -->
+            </div>
+            <p class="text-[11px] text-slate-500">Karakterin hem yarış pistinde hem de canlı sohbette görünecek!</p>
+          </div>
+
+          <!-- Profil & Ortak Sistem Formu -->
+          <div class="rounded-3xl bg-white p-4 shadow-card border border-slate-100 space-y-3.5">
+            <div>
+              <label class="block text-[11px] font-extrabold text-slate-600 mb-1">Adın / Takma Adın</label>
+              <input id="profile-name-input" type="text" maxlength="24" placeholder="Örn: Ahmet, Zeynep..."
+                class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-extrabold text-slate-600 mb-1">Ofis Durum Mesajın</label>
+              <input id="profile-status-input" type="text" maxlength="40" placeholder="Örn: Çay molasında adım kasıyorum ☕"
+                class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-extrabold text-slate-600 mb-1">Günlük Adım Hedefi</label>
+                <input id="profile-goal-input" type="number" min="1000" max="50000" step="500" value="8000"
+                  class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-extrabold text-slate-600 mb-1">Grup / Sistem Kodu</label>
+                <input id="profile-room-input" type="text" maxlength="20" value="GENEL"
+                  class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-black uppercase text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-500 bg-indigo-50/70 rounded-xl px-3 py-2 border border-indigo-100">
+              🌐 <strong>GENEL</strong> kodu varsayılandır: Uygulamayı yükleyen herkes kişi sınırı olmadan otomatik olarak bu canlı sisteme eklenir!
+            </p>
+
+            <!-- Karakter Özelleştirme Seçicileri -->
+            <div class="space-y-3 pt-1">
+              <div>
+                <div class="text-[11px] font-extrabold text-slate-600 mb-1.5">Ten Rengi</div>
+                <div id="picker-skin" class="flex flex-wrap gap-2"></div>
+              </div>
+              <div>
+                <div class="text-[11px] font-extrabold text-slate-600 mb-1.5">Saç Stili</div>
+                <div id="picker-hair-style" class="flex flex-wrap gap-1.5"></div>
+              </div>
+              <div>
+                <div class="text-[11px] font-extrabold text-slate-600 mb-1.5">Saç Rengi</div>
+                <div id="picker-hair-color" class="flex flex-wrap gap-2"></div>
+              </div>
+              <div>
+                <div class="text-[11px] font-extrabold text-slate-600 mb-1.5">Tişört Rengi</div>
+                <div id="picker-shirt-color" class="flex flex-wrap gap-2"></div>
+              </div>
+              <div>
+                <div class="text-[11px] font-extrabold text-slate-600 mb-1.5">Aksesuar</div>
+                <div id="picker-accessory" class="flex flex-wrap gap-1.5"></div>
+              </div>
+              <div>
+                <div class="text-[11px] font-extrabold text-slate-600 mb-1.5">Yüz İfadesi</div>
+                <div id="picker-expression" class="flex flex-wrap gap-1.5"></div>
+              </div>
+            </div>
+
+            <button id="save-profile-btn" type="button" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-[0.98] transition text-white font-black text-sm shadow-md shadow-indigo-500/25">
+              💾 Karakteri & Profili Kaydet
+            </button>
+          </div>
+        </div>
+
+        <!-- ALT SEKME 5B: ALDIĞIM HEDİYELER & ROZETLERİM -->
+        <div id="profile-rewards-view" class="hidden space-y-4">
+          <!-- Sana Gelen Hediyeler Vitrini -->
+          <div class="rounded-3xl bg-gradient-to-br from-pink-500 via-rose-500 to-orange-500 p-4 text-white shadow-card space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-[10px] font-bold uppercase tracking-wider text-pink-100">Hediye Vitrini</div>
+                <h2 class="text-base font-black">🎁 Sana Gelen Hediyeler</h2>
+              </div>
+              <span id="received-gifts-total-pill" class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-black">0 Hediye</span>
+            </div>
+            <div id="received-gifts-grid" class="grid grid-cols-3 gap-2">
+              <!-- JS ile doldurulur -->
+            </div>
+          </div>
+
+          <!-- Tüm Zamanlar Özet Kartı -->
+          <div class="rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 p-4 text-white shadow-card space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-100">Tüm Zamanlar Toplamın</div>
+                <div id="stats-total-steps" class="text-3xl font-black mt-0.5">0 adım</div>
+              </div>
+              <div class="text-4xl">🏅</div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center">
+              <div class="rounded-2xl bg-white/15 p-2">
+                <div id="stats-corridor" class="text-sm font-black">0</div>
+                <div class="text-[10px] text-emerald-100">Koridor Turu</div>
+              </div>
+              <div class="rounded-2xl bg-white/15 p-2">
+                <div id="stats-tea" class="text-sm font-black">0</div>
+                <div class="text-[10px] text-emerald-100">Çay Ocağı</div>
+              </div>
+              <div class="rounded-2xl bg-white/15 p-2">
+                <div id="stats-streak" class="text-sm font-black">1 gün</div>
+                <div class="text-[10px] text-emerald-100">Gün Serisi 🔥</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Başarı Rozetleri -->
+          <div class="rounded-3xl bg-white p-4 shadow-card border border-slate-100 space-y-3">
+            <div class="flex items-center justify-between">
+              <h2 class="text-sm font-black text-slate-800">🎖️ Başarı Rozetlerin</h2>
+              <span id="badges-unlocked-count" class="text-xs font-extrabold text-indigo-600">0 / 8</span>
+            </div>
+            <div id="badges-grid" class="grid grid-cols-2 gap-2.5">
+              <!-- JS ile doldurulur -->
+            </div>
+          </div>
+
+          <!-- Önizleme Simülasyon Araçları (Sadece Yerel Önizlemede görünür) -->
+          <div id="demo-sim-box" class="hidden rounded-3xl bg-white p-4 shadow-card border border-slate-100 space-y-2">
+            <h3 class="text-xs font-black text-slate-800">🧪 Önizleme Test Araçları</h3>
+            <div class="grid grid-cols-2 gap-2">
+              <button id="add-demo-member-btn" type="button" class="py-2.5 px-2 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-extrabold transition">
+                ➕ Yeni Kişi Ekle
+              </button>
+              <button id="sim-incoming-gift-btn" type="button" class="py-2.5 px-2 rounded-2xl bg-pink-50 hover:bg-pink-100 text-pink-700 text-[11px] font-extrabold transition">
+                🎁 Bana Hediye Gelsin
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Alt Navigasyon Barı (5 Sekme: Yarış, Sohbet, Adım, Görev, Profil) -->
+    <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white/95 backdrop-blur-md border-t border-slate-200 z-30 safe-nav-pb shadow-[0_-4px_20px_rgba(15,23,42,0.06)]">
+      <div class="grid grid-cols-5 px-1 py-1.5">
+        <button type="button" data-tab="race" class="nav-btn flex flex-col items-center justify-center py-1 rounded-2xl text-indigo-600 font-extrabold transition bg-indigo-50/80">
+          <span class="text-lg leading-none">🏁</span>
+          <span class="text-[10px] mt-1">Yarış</span>
+        </button>
+        <button type="button" data-tab="chat" class="nav-btn relative flex flex-col items-center justify-center py-1 rounded-2xl text-slate-400 font-bold transition">
+          <span class="text-lg leading-none">💬</span>
+          <span class="text-[10px] mt-1">Sohbet</span>
+          <span id="chat-unread-badge" class="hidden absolute top-0.5 right-3 min-w-[17px] h-[17px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow">0</span>
+        </button>
+        <button type="button" data-tab="pedometer" class="nav-btn flex flex-col items-center justify-center py-1 rounded-2xl text-slate-400 font-bold transition">
+          <span class="text-lg leading-none">👟</span>
+          <span class="text-[10px] mt-1">Adım</span>
+        </button>
+        <button type="button" data-tab="missions" class="nav-btn flex flex-col items-center justify-center py-1 rounded-2xl text-slate-400 font-bold transition">
+          <span class="text-lg leading-none">🎯</span>
+          <span class="text-[10px] mt-1">Görev</span>
+        </button>
+        <button type="button" data-tab="profile" class="nav-btn flex flex-col items-center justify-center py-1 rounded-2xl text-slate-400 font-bold transition">
+          <span class="text-lg leading-none">🎨</span>
+          <span class="text-[10px] mt-1">Profil</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 1: HIZLI SİSTEME KATILIM (ONBOARDING)                            -->
+  <!-- ====================================================================== -->
+  <div id="onboarding-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-3xl bg-white p-5 shadow-2xl space-y-4">
+      <div class="text-center space-y-1">
+        <div class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-extrabold">
+          🌐 Canlı Yarış, Sohbet & Hediye
+        </div>
+        <h2 class="text-xl font-black text-slate-900">Ofis Adım'a Hoş Geldin!</h2>
+        <p class="text-xs text-slate-500">Adını yaz, karakterini seç — sisteme anında katıl ve 300 🪙 hediye altını kazan!</p>
+      </div>
+
+      <div class="flex flex-col items-center gap-2">
+        <div id="onboarding-avatar-preview" class="w-24 h-24 rounded-3xl bg-indigo-50 border-2 border-indigo-100 flex items-center justify-center"></div>
+        <button id="onboarding-random-avatar-btn" type="button" class="px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-extrabold transition">
+          🎲 Farklı Karakter Seç
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-extrabold text-slate-600 mb-1">Adın / Soyadın veya Takma Adın</label>
+          <input id="onboarding-name-input" type="text" maxlength="24" placeholder="Örn: Mert Yılmaz"
+            class="w-full px-3.5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div class="rounded-2xl bg-emerald-50 border border-emerald-200/80 px-3 py-2 text-[11px] text-emerald-800 font-semibold flex items-center gap-2">
+          <span>✅</span>
+          <span>Otomatik olarak <strong>GENEL</strong> canlı sisteme ekleneceksin.</span>
+        </div>
+      </div>
+
+      <button id="onboarding-join-btn" type="button" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-[0.98] transition text-white font-black text-sm shadow-lg shadow-indigo-500/30">
+        🚀 Sisteme Katıl & Yarışa Başla
+      </button>
+    </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 2: HEDİYE GÖNDERME MAĞAZASI                                      -->
+  <!-- ====================================================================== -->
+  <div id="gift-modal" class="hidden fixed inset-0 z-50 bg-slate-900/65 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+    <div class="w-full max-w-sm rounded-3xl bg-white p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <h3 class="text-base font-black text-slate-900 flex items-center gap-1.5">
+            <span>🎁</span> Hediye Gönder
+          </h3>
+          <p class="text-[11px] text-slate-500">Sohbette kutlama çıkar ve alıcıya bonus XP gider!</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="gift-modal-coins" class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black">🪙 300</span>
+          <button id="close-gift-modal-btn" type="button" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs">✕</button>
+        </div>
+      </div>
+
+      <!-- Kime Gönderilecek? -->
+      <div>
+        <label class="block text-[11px] font-extrabold text-slate-600 mb-1">Kime Göndermek İstiyorsun?</label>
+        <select id="gift-recipient-select" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-extrabold text-slate-800 focus:outline-none focus:ring-2 focus:ring-pink-400">
+          <!-- JS ile doldurulur -->
+        </select>
+      </div>
+
+      <!-- Hediye Kataloğu -->
+      <div>
+        <div class="text-[11px] font-extrabold text-slate-600 mb-1.5">Hediye Seç</div>
+        <div id="gift-catalog-grid" class="grid grid-cols-2 gap-2">
+          <!-- JS ile doldurulur -->
+        </div>
+      </div>
+
+      <!-- Kişisel Not -->
+      <div>
+        <label class="block text-[11px] font-extrabold text-slate-600 mb-1">Hediye Notun (İsteğe Bağlı)</label>
+        <input id="gift-note-input" type="text" maxlength="80" placeholder="Örn: Bugün harikasın, çaylar benden! ☕"
+          class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-pink-400" />
+      </div>
+
+      <button id="confirm-send-gift-btn" type="button" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 active:scale-[0.98] transition text-white text-sm font-black shadow-lg shadow-rose-500/25">
+        🎁 Hediyeyi Gönder!
+      </button>
+    </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 3: KATILIMCI İŞLEMLERİ (TEŞVİK / HEDİYE / 1v1 DÜELLO)            -->
+  <!-- ====================================================================== -->
+  <div id="member-action-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+    <div class="w-full max-w-sm rounded-3xl bg-white p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div id="action-modal-avatar" class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center overflow-hidden"></div>
+          <div>
+            <h3 id="action-modal-name" class="text-sm font-black text-slate-900">Katılımcı</h3>
+            <p id="action-modal-steps" class="text-xs font-bold text-indigo-600">0 adım</p>
+          </div>
+        </div>
+        <button id="close-action-modal-btn" type="button" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs">✕</button>
+      </div>
+
+      <!-- Hızlı Hediye Gönder Butonu -->
+      <button id="open-gift-for-member-btn" type="button" class="w-full py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 active:scale-[0.98] transition text-white text-xs font-black shadow-md flex items-center justify-center gap-1.5">
+        <span>🎁</span> Bu Arkadaşına Hediye Gönder
+      </button>
+
+      <div class="space-y-2">
+        <div class="text-[11px] font-extrabold text-slate-500">Hızlı Teşvik Gönder</div>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" data-cheer="🔥 Alev aldın, durmak yok!" class="send-cheer-btn py-2.5 px-3 rounded-2xl bg-orange-50 hover:bg-orange-100 text-orange-800 text-xs font-extrabold text-left transition">🔥 Alev aldın!</button>
+          <button type="button" data-cheer="☕ Çay molası yürüyüşüne çık!" class="send-cheer-btn py-2.5 px-3 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-extrabold text-left transition">☕ Çay yürüyüşü!</button>
+          <button type="button" data-cheer="🚀 Şampiyon geliyor, yol açın!" class="send-cheer-btn py-2.5 px-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 text-xs font-extrabold text-left transition">🚀 Şampiyon!</button>
+          <button type="button" data-cheer="👏 Harika tempo, tebrikler!" class="send-cheer-btn py-2.5 px-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-extrabold text-left transition">👏 Harika tempo!</button>
+        </div>
+      </div>
+
+      <div class="pt-1 border-t border-slate-100">
+        <button id="start-duel-modal-btn" type="button" class="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-[0.98] transition text-white text-xs font-black shadow-md">
+          ⚔️ 1v1 Adım Düellosu Başlat!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 4: ANDROID PİL OPTİMİZASYONU REHBERİ                             -->
+  <!-- ====================================================================== -->
+  <div id="battery-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-3xl bg-white p-5 shadow-2xl space-y-3.5 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-black text-slate-900">🔋 Android Pil Optimizasyonu Rehberi</h3>
+        <button id="close-battery-modal-btn" type="button" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-black text-xs">✕</button>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Ekran kapalıyken adımlarınızın kesintisiz sayılması için telefonunuzda pil kısıtlamasını bir kez kapatmanız yeterlidir:
+      </p>
+      <div class="space-y-2 text-xs text-slate-700">
+        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+          <div class="font-black text-slate-900">Samsung (One UI)</div>
+          <p class="mt-0.5 text-[11px]">Ayarlar → Uygulamalar → Ofis Adım → Pil → <strong>Kısıtlanmamış</strong></p>
+        </div>
+        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+          <div class="font-black text-slate-900">Xiaomi / Redmi / Poco</div>
+          <p class="mt-0.5 text-[11px]">Ayarlar → Uygulamalar → Ofis Adım → <strong>Otomatik Başlatma: Açık</strong> ve Pil Tasarrufu → <strong>Kısıtlama Yok</strong></p>
+        </div>
+        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+          <div class="font-black text-slate-900">Standart Android / Pixel</div>
+          <p class="mt-0.5 text-[11px]">Uygulama Bilgisi → Uygulama pil kullanımı → <strong>Sınırsız</strong></p>
+        </div>
+      </div>
+      <button id="activate-all-protections-btn" type="button" class="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black">
+        ⚡ Tüm Korumaları Şimdi Etkinleştir
+      </button>
+    </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- UYGULAMA MOTORU                                                        -->
+  <!-- ====================================================================== -->
+  <script>
+    (function () {
+      "use strict";
+
+      // =========================================================================
+      // 1. SABİTLER, HEDİYE KATALOĞU VE FIREBASE CANLI BAĞLANTI YAPILANDIRMASI
+      // =========================================================================
+      const DEFAULT_ROOM_CODE = "GENEL";
+      const DEFAULT_DAILY_GOAL = 8000;
+      const STARTER_COINS = 300;
+      const BROADCAST_CHANNEL_NAME = "ofis_adim_unlimited_sync_v4";
+      const LOCAL_PROFILE_STORAGE_KEY = "ofis_adim_profile_v4";
+      const LOCAL_ROOM_STORAGE_PREFIX = "ofis_adim_room_cache_v4_";
+      const LOCAL_NATIVE_SYNC_KEY = "ofis_adim_native_sync_v4";
+      const LOCAL_MISSIONS_KEY = "ofis_adim_missions_v4";
+      const LOCAL_CLAIMED_GIFTS_KEY = "ofis_adim_claimed_gifts_v4";
+      const APP_ID = "ofis-adim-app";
+
+      // ADIMADIM Firebase Canlı Senkronizasyon Yapılandırması
+      const CUSTOM_FIREBASE_CONFIG = {
+        apiKey: "AIzaSyC2WLvHbrIn1LWS3fGMQBwF51vOtGUwvss",
+        authDomain: "adimadim-f0d76.firebaseapp.com",
+        projectId: "adimadim-f0d76",
+        storageBucket: "adimadim-f0d76.firebasestorage.app",
+        messagingSenderId: "427061929070",
+        appId: "1:427061929070:web:b5878ad08620933c4c327f",
+        measurementId: "G-W7QMGWNN8Q"
+      };
+
+      // Ofis Hediye Kataloğu
+      const GIFT_CATALOG = [
+        { id: "tea", emoji: "☕", name: "Sıcak Çay", cost: 0, bonusXp: 15, desc: "Ücretsiz ofis ikramı!", color: "from-amber-50 to-orange-50 border-amber-200" },
+        { id: "simit", emoji: "🥐", name: "Simit & Poğaça", cost: 30, bonusXp: 30, desc: "Sabah enerjisi!", color: "from-yellow-50 to-amber-50 border-yellow-200" },
+        { id: "energy", emoji: "⚡", name: "Enerji İksiri", cost: 60, bonusXp: 50, desc: "Adımlara turbo tak!", color: "from-sky-50 to-indigo-50 border-sky-200" },
+        { id: "sneaker", emoji: "👟", name: "Altın Ayakkabı", cost: 120, bonusXp: 90, desc: "Pistlerin yıldızı!", color: "from-emerald-50 to-teal-50 border-emerald-200" },
+        { id: "bouquet", emoji: "💐", name: "Motivasyon Buketi", cost: 180, bonusXp: 130, desc: "Harikasın arkadaşım!", color: "from-pink-50 to-rose-50 border-pink-200" },
+        { id: "trophy", emoji: "🏆", name: "Şampiyon Kupası", cost: 300, bonusXp: 250, desc: "Zirvenin tek sahibi!", color: "from-purple-50 to-fuchsia-50 border-purple-200" }
+      ];
+
+      // Karakter Seçenekleri
+      const SKIN_TONES = ["#fde2c4", "#f7cba1", "#e5a97c", "#c68658", "#8d5524", "#5c3818"];
+      const HAIR_STYLES = [
+        { id: "short", label: "Kısa" },
+        { id: "spiky", label: "Dik" },
+        { id: "bob", label: "Küt" },
+        { id: "long", label: "Uzun" },
+        { id: "curly", label: "Kıvırcık" },
+        { id: "bun", label: "Topuz" },
+        { id: "bald", label: "Kel" }
+      ];
+      const HAIR_COLORS = ["#1e293b", "#451a03", "#92400e", "#d97706", "#b91c1c", "#4f46e5", "#64748b"];
+      const SHIRT_COLORS = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#8b5cf6", "#0f172a"];
+      const ACCESSORIES = [
+        { id: "none", label: "Yok" },
+        { id: "glasses", label: "Gözlük" },
+        { id: "sunglasses", label: "Güneş G." },
+        { id: "headphones", label: "Kulaklık" },
+        { id: "headband", label: "Ter Bandı" },
+        { id: "cap", label: "Şapka" }
+      ];
+      const EXPRESSIONS = [
+        { id: "happy", label: "Mutlu" },
+        { id: "cool", label: "Havalı" },
+        { id: "determined", label: "Azimli" },
+        { id: "wink", label: "Göz Kırp" }
+      ];
+
+      const RANKS = [
+        { minXp: 0, level: 1, title: "🪑 Masa Başı Çaylağı" },
+        { minXp: 200, level: 2, title: "☕ Çay Ocağı Gezgini" },
+        { minXp: 500, level: 3, title: "💨 Koridor Rüzgarı" },
+        { minXp: 1000, level: 4, title: "🪜 Merdiven Ustası" },
+        { minXp: 1800, level: 5, title: "⚡ Tempo Lideri" },
+        { minXp: 3000, level: 6, title: "🏆 Adım Maraton Efsanesi" }
+      ];
+
+      const DAILY_MISSIONS = [
+        { id: "m_1000", title: "Isınma Turu", desc: "Bugün 1.000 adıma ulaş", target: 1000, xp: 60, coins: 30, emoji: "🌱" },
+        { id: "m_3000", title: "Aktif Mesai", desc: "Bugün 3.000 adıma ulaş", target: 3000, xp: 100, coins: 60, emoji: "👟" },
+        { id: "m_5000", title: "Yarı Yolu Geç", desc: "Bugün 5.000 adıma ulaş", target: 5000, xp: 150, coins: 100, emoji: "🔥" },
+        { id: "m_8000", title: "Günlük Şampiyon", desc: "Bugün 8.000 adıma ulaş", target: 8000, xp: 240, coins: 160, emoji: "👑" },
+        { id: "m_12000", title: "Maraton Ruhu", desc: "Bugün 12.000 adıma ulaş", target: 12000, xp: 350, coins: 250, emoji: "🚀" }
+      ];
+
+      const MINI_MISSIONS = [
+        { id: "mini_stairs", title: "Merdiven Şampiyonu", desc: "Asansör yerine merdiven kullan", xp: 80, coins: 40, bonusSteps: 120, emoji: "🪜" },
+        { id: "mini_water", title: "Su Molası Yürüyüşü", desc: "Kalkıp mutfaktan taze su al", xp: 50, coins: 25, bonusSteps: 60, emoji: "💧" },
+        { id: "mini_visit", title: "Mesaj Atma, Yanına Git", desc: "Bir iş arkadaşına yürüyerek uğra", xp: 70, coins: 35, bonusSteps: 90, emoji: "🗣️" },
+        { id: "mini_5min", title: "5 Dakika Koridor Turu", desc: "Kısa tempolu bir yürüyüş yap", xp: 110, coins: 60, bonusSteps: 450, emoji: "🏃" }
+      ];
+
+      const WHEEL_CHALLENGES = [
+        { emoji: "🪜", text: "2 kat merdiven inip çık! (+120 XP & +50 🪙)" },
+        { emoji: "💧", text: "1 bardak su içip 200 adım koridor turu at! (+120 XP & +50 🪙)" },
+        { emoji: "🧘", text: "Ayakta 1 dakika esneme + 100 adım! (+120 XP & +50 🪙)" },
+        { emoji: "☕", text: "Sohbetten bir arkadaşına Sıcak Çay 🎁 gönder! (+120 XP & +50 🪙)" },
+        { emoji: "📣", text: "Sıralamadan 2 arkadaşına teşvik gönder! (+120 XP & +50 🪙)" },
+        { emoji: "⚡", text: "Telefonu eline al ve 3 dakika hızlı tempo yürü! (+120 XP & +50 🪙)" }
+      ];
+
+      const BADGES = [
+        { id: "b_first", emoji: "🐣", title: "İlk Adım", desc: "Sisteme katıl ve adım say", check: (p) => (p.totalSteps || 0) >= 1 },
+        { id: "b_1k", emoji: "🌿", title: "1.000 Kulübü", desc: "Bir günde 1.000 adım", check: (p) => getEffectiveTodaySteps(p) >= 1000 || (p.totalSteps || 0) >= 1000 },
+        { id: "b_5k", emoji: "🔥", title: "5.000 Ateşi", desc: "Bir günde 5.000 adım", check: (p) => getEffectiveTodaySteps(p) >= 5000 },
+        { id: "b_goal", emoji: "🎯", title: "Hedef Avcısı", desc: "Günlük hedefini %100 geç", check: (p) => getEffectiveTodaySteps(p) >= (p.dailyGoal || DEFAULT_DAILY_GOAL) },
+        { id: "b_10k", emoji: "🚀", title: "10K Roketi", desc: "Bir günde 10.000 adım", check: (p) => getEffectiveTodaySteps(p) >= 10000 },
+        { id: "b_gifter", emoji: "🎁", title: "Cömert Arkadaş", desc: "En az 1 hediye gönder", check: (p) => (p.giftsSent || 0) >= 1 },
+        { id: "b_xp500", emoji: "⭐", title: "Görev Ustası", desc: "500 XP barajını aş", check: (p) => (p.xp || 0) >= 500 },
+        { id: "b_streak3", emoji: "📅", title: "İstikrarlı", desc: "3 gün üst üste aktif ol", check: (p) => (p.streak || 1) >= 3 }
+      ];
+
+      // =========================================================================
+      // 2. UYGULAMA DURUMU (STATE)
+      // =========================================================================
+      const state = {
+        activeTab: "race",
+        raceSubTab: "daily",
+        profileSubTab: "avatar",
+        roomCode: DEFAULT_ROOM_CODE,
+        userId: "usr_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
+        myProfile: null,
+        draftAvatar: null,
+
+        // Sınırsız katılımcılar, sohbet & hediyeler
+        membersMap: new Map(),
+        visibleMembers: [],
+        cheers: [],
+        duels: [],
+        messages: [],
+        lastReadChatTimestamp: Date.now(),
+        claimedGiftIds: {},
+        selectedGiftId: "tea",
+        weeklyBet: "Haftanın birincisine ekipçe kahve + tatlı ısmarlıyoruz! ☕🍰",
+
+        // Arama & Pist görünümü
+        searchQuery: "",
+        showAllTrackLanes: false,
+        selectedActionUid: null,
+
+        // Bulut (Firebase) & BroadcastChannel
+        cloudEnabled: false,
+        fb: null,
+        unsubscribers: [],
+        broadcastChannel: null,
+
+        // Sensör & Arka Plan
+        sensorActive: false,
+        sensorManuallyPaused: false,
+        sensorReceivingData: false,
+        sensitivityLevel: 2,
+        pendingSensorSteps: 0,
+        lastStepTimestamp: 0,
+        lastAccelMag: 9.81,
+        sensorFlushTimer: null,
+        bgKeepAliveEnabled: true,
+        wakeLock: null,
+        bgWorker: null,
+
+        // Yerel Android APK Donanım Köprüsü
+        nativeApkMode: false,
+        nativeSensorType: "WEB",
+        lastSyncedNativeDate: "",
+        lastSyncedNativeSteps: 0,
+
+        // Görev & Çark
+        claimedTodayMissions: {},
+        currentWheelChallenge: null
+      };
+
+      // =========================================================================
+      // 3. YARDIMCI FONKSİYONLAR
+      // =========================================================================
+      function getTodayKey(offsetDays = 0) {
+        const d = new Date();
+        d.setDate(d.getDate() + offsetDays);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+
+      function getTurkishDateFormatted() {
+        try {
+          return new Intl.DateTimeFormat("tr-TR", {
+            day: "numeric",
+            month: "long",
+            weekday: "short"
+          }).format(new Date());
+        } catch (err) {
+          return getTodayKey();
+        }
+      }
+
+      function formatTimeHHMM(ts) {
+        try {
+          const d = new Date(ts || Date.now());
+          return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+        } catch (err) {
+          return "";
+        }
+      }
+
+      function formatNum(n) {
+        return Math.max(0, Math.floor(Number(n) || 0)).toLocaleString("tr-TR");
+      }
+
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function normalizeRoomCode(code) {
+        const clean = String(code || "")
+          .trim()
+          .toUpperCase()
+          .replace(/[^A-Z0-9_-]/g, "")
+          .slice(0, 20);
+        return clean || DEFAULT_ROOM_CODE;
+      }
+
+      function getEffectiveTodaySteps(member) {
+        if (!member) return 0;
+        const today = getTodayKey();
+        if (member.lastActiveDate === today) {
+          return Math.max(0, Math.floor(Number(member.todaySteps) || 0));
+        }
+        if (member.weeklyHistory && typeof member.weeklyHistory[today] === "number") {
+          return Math.max(0, Math.floor(member.weeklyHistory[today]));
+        }
+        return 0;
+      }
+
+      function getWeeklyStepsArray(member) {
+        const arr = [];
+        const today = getTodayKey();
+        const hist = (member && member.weeklyHistory) || {};
+        for (let i = 6; i >= 0; i--) {
+          const key = getTodayKey(-i);
+          if (key === today) {
+            arr.push(getEffectiveTodaySteps(member));
+          } else {
+            arr.push(Math.max(0, Math.floor(Number(hist[key]) || 0)));
+          }
+        }
+        return arr;
+      }
+
+      function getWeeklyTotalSteps(member) {
+        return getWeeklyStepsArray(member).reduce((acc, v) => acc + v, 0);
+      }
+
+      function createRandomAvatar() {
+        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+        return {
+          skin: pick(SKIN_TONES),
+          hairStyle: pick(HAIR_STYLES).id,
+          hairColor: pick(HAIR_COLORS),
+          shirtColor: pick(SHIRT_COLORS),
+          accessory: pick(ACCESSORIES).id,
+          expression: pick(EXPRESSIONS).id
+        };
+      }
+
+      function getRankInfo(xp) {
+        const val = Math.max(0, Math.floor(Number(xp) || 0));
+        let current = RANKS[0];
+        let next = RANKS[1] || null;
+        for (let i = 0; i < RANKS.length; i++) {
+          if (val >= RANKS[i].minXp) {
+            current = RANKS[i];
+            next = RANKS[i + 1] || null;
+          }
+        }
+        const pct = next
+          ? Math.min(100, Math.round(((val - current.minXp) / (next.minXp - current.minXp)) * 100))
+          : 100;
+        return { current, next, pct, xp: val };
+      }
+
+      function showToast(msg, type = "info") {
+        const container = document.getElementById("toast-container");
+        if (!container) return;
+        const colors = {
+          success: "bg-emerald-600 text-white",
+          warning: "bg-amber-500 text-slate-950",
+          error: "bg-rose-600 text-white",
+          gift: "bg-gradient-to-r from-pink-600 to-rose-600 text-white",
+          info: "bg-slate-900 text-white"
+        };
+        const el = document.createElement("div");
+        el.className = `${colors[type] || colors.info} px-4 py-2.5 rounded-2xl shadow-xl text-xs font-extrabold text-center transition-all duration-300 opacity-0 -translate-y-2`;
+        el.textContent = msg;
+        container.appendChild(el);
+        requestAnimationFrame(() => {
+          el.classList.remove("opacity-0", "-translate-y-2");
+        });
+        setTimeout(() => {
+          el.classList.add("opacity-0", "-translate-y-2");
+          setTimeout(() => el.remove(), 300);
+        }, 3200);
+      }
+
+      function playChime() {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          const ctx = new AudioCtx();
+          const notes = [523.25, 659.25, 783.99];
+          notes.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "triangle";
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.08, ctx.currentTime + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.25);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + idx * 0.08);
+            osc.stop(ctx.currentTime + idx * 0.08 + 0.26);
+          });
+        } catch (err) {}
+      }
+
+      function launchConfetti() {
+        const canvas = document.getElementById("confetti-canvas");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const colors = ["#6366f1", "#10b981", "#f59e0b", "#ec4899", "#0ea5e9"];
+        const pieces = Array.from({ length: 65 }, () => ({
+          x: Math.random() * canvas.width,
+          y: -10 - Math.random() * 60,
+          r: 4 + Math.random() * 5,
+          vx: (Math.random() - 0.5) * 4,
+          vy: 2.5 + Math.random() * 4,
+          rot: Math.random() * 360,
+          vrot: (Math.random() - 0.5) * 10,
+          color: colors[Math.floor(Math.random() * colors.length)]
+        }));
+
+        let frame = 0;
+        function tick() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          pieces.forEach((p) => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rot += p.vrot;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate((p.rot * Math.PI) / 180);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.7);
+            ctx.restore();
+          });
+          frame++;
+          if (frame < 95) {
+            requestAnimationFrame(tick);
+          } else {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+
+      // =========================================================================
+      // 4. VEKTÖREL KARAKTER (SVG) OLUŞTURUCU
+      // =========================================================================
+      function renderAvatarSVG(avatarInput, size = 48, showCrown = false) {
+        const a = {
+          skin: "#f7cba1",
+          hairStyle: "short",
+          hairColor: "#1e293b",
+          shirtColor: "#4f46e5",
+          accessory: "none",
+          expression: "happy",
+          ...(avatarInput || {})
+        };
+
+        let hairBack = "";
+        let hairFront = "";
+        if (a.hairStyle === "short") {
+          hairFront = `<path d="M24 38 C24 18, 76 18, 76 38 C70 28, 30 28, 24 38 Z" fill="${a.hairColor}"/>`;
+        } else if (a.hairStyle === "spiky") {
+          hairFront = `<path d="M24 38 L29 19 L40 26 L50 13 L60 26 L71 19 L76 38 C68 29, 32 29, 24 38 Z" fill="${a.hairColor}"/>`;
+        } else if (a.hairStyle === "bob") {
+          hairBack = `<path d="M21 36 C21 15, 79 15, 79 36 L81 63 C75 66, 70 64, 70 55 L30 55 C30 64, 25 66, 19 63 Z" fill="${a.hairColor}"/>`;
+          hairFront = `<path d="M23 36 C28 21, 72 21, 77 36 C65 28, 35 28, 23 36 Z" fill="${a.hairColor}"/>`;
+        } else if (a.hairStyle === "long") {
+          hairBack = `<path d="M19 36 C19 14, 81 14, 81 36 L84 79 L16 79 Z" fill="${a.hairColor}"/>`;
+          hairFront = `<path d="M23 36 C30 21, 70 21, 77 36 C64 29, 36 29, 23 36 Z" fill="${a.hairColor}"/>`;
+        } else if (a.hairStyle === "curly") {
+          hairBack = `<circle cx="25" cy="36" r="10" fill="${a.hairColor}"/><circle cx="75" cy="36" r="10" fill="${a.hairColor}"/><circle cx="32" cy="24" r="10" fill="${a.hairColor}"/><circle cx="50" cy="20" r="11" fill="${a.hairColor}"/><circle cx="68" cy="24" r="10" fill="${a.hairColor}"/>`;
+        } else if (a.hairStyle === "bun") {
+          hairBack = `<circle cx="50" cy="14" r="11" fill="${a.hairColor}"/>`;
+          hairFront = `<path d="M24 38 C24 18, 76 18, 76 38 C66 28, 34 28, 24 38 Z" fill="${a.hairColor}"/>`;
+        }
+
+        let eyes = `<circle cx="39" cy="46" r="3.4" fill="#0f172a"/><circle cx="61" cy="46" r="3.4" fill="#0f172a"/>`;
+        let mouth = `<path d="M41 58 Q50 66 59 58" fill="none" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/>`;
+        if (a.expression === "cool") {
+          mouth = `<path d="M42 59 Q52 63 60 57" fill="none" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/>`;
+        } else if (a.expression === "determined") {
+          eyes = `<path d="M34 42 L44 45" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round"/><path d="M66 42 L56 45" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round"/><circle cx="39" cy="47" r="3.2" fill="#0f172a"/><circle cx="61" cy="47" r="3.2" fill="#0f172a"/>`;
+          mouth = `<path d="M43 60 L57 60" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/>`;
+        } else if (a.expression === "wink") {
+          eyes = `<circle cx="39" cy="46" r="3.4" fill="#0f172a"/><path d="M56 46 Q61 42 66 46" fill="none" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/>`;
+        }
+
+        let accessory = "";
+        if (a.accessory === "glasses") {
+          accessory = `<circle cx="39" cy="46" r="8" fill="none" stroke="#1e293b" stroke-width="2.6"/><circle cx="61" cy="46" r="8" fill="none" stroke="#1e293b" stroke-width="2.6"/><line x1="47" y1="46" x2="53" y2="46" stroke="#1e293b" stroke-width="2.6"/>`;
+        } else if (a.accessory === "sunglasses") {
+          accessory = `<rect x="29" y="40" width="19" height="12" rx="4" fill="#0f172a"/><rect x="52" y="40" width="19" height="12" rx="4" fill="#0f172a"/><line x1="48" y1="44" x2="52" y2="44" stroke="#0f172a" stroke-width="2.8"/>`;
+        } else if (a.accessory === "headphones") {
+          accessory = `<path d="M21 48 C21 18, 79 18, 79 48" fill="none" stroke="#f43f5e" stroke-width="4.5"/><rect x="16" y="41" width="8" height="16" rx="4" fill="#f43f5e"/><rect x="76" y="41" width="8" height="16" rx="4" fill="#f43f5e"/>`;
+        } else if (a.accessory === "headband") {
+          accessory = `<rect x="24" y="30" width="52" height="7" rx="3.5" fill="#10b981"/><line x1="25" y1="33.5" x2="75" y2="33.5" stroke="#ffffff" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+        } else if (a.accessory === "cap") {
+          accessory = `<path d="M23 34 C25 17, 75 17, 77 34 Z" fill="#0ea5e9"/><path d="M21 34 L84 34 C84 38, 70 39, 50 38 C32 37, 21 37, 21 34 Z" fill="#0284c7"/>`;
+        }
+
+        const crown = showCrown
+          ? `<path d="M36 16 L41 5 L50 12 L59 5 L64 16 Z" fill="#fbbf24" stroke="#d97706" stroke-width="1.8" stroke-linejoin="round"/>`
+          : "";
+
+        return `
+          <svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="shrink-0">
+            ${hairBack}
+            <path d="M22 96 C22 75, 78 75, 78 96 Z" fill="${a.shirtColor}"/>
+            <rect x="43" y="65" width="14" height="14" rx="5" fill="${a.skin}"/>
+            <circle cx="24" cy="48" r="5.5" fill="${a.skin}"/>
+            <circle cx="76" cy="48" r="5.5" fill="${a.skin}"/>
+            <rect x="25" y="23" width="50" height="49" rx="24" fill="${a.skin}"/>
+            <circle cx="33" cy="54" r="4" fill="#fb7185" opacity="0.28"/>
+            <circle cx="67" cy="54" r="4" fill="#fb7185" opacity="0.28"/>
+            ${hairFront}
+            ${eyes}
+            ${mouth}
+            ${accessory}
+            ${crown}
+          </svg>
+        `;
+      }
+
+      // =========================================================================
+      // 5. BULUT (FIREBASE) + YEREL SENKRONİZASYON MOTORU (SOHBET & HEDİYE DAHİL)
+      // =========================================================================
+      function updateSyncStatusUI() {
+        const dot = document.getElementById("sync-dot");
+        const label = document.getElementById("sync-label");
+        const demoBox = document.getElementById("demo-sim-box");
+        if (!dot || !label) return;
+        if (state.cloudEnabled) {
+          dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+          label.textContent = "Canlı";
+          if (demoBox) demoBox.classList.add("hidden");
+        } else {
+          dot.className = "w-2 h-2 rounded-full bg-amber-300";
+          label.textContent = "Çevrimdışı";
+          if (demoBox) demoBox.classList.remove("hidden");
+        }
+      }
+
+      async function initCloudBackend() {
+        if (!CUSTOM_FIREBASE_CONFIG) {
+          state.cloudEnabled = false;
+          updateSyncStatusUI();
+          return false;
+        }
+        try {
+          const [appMod, authMod, fsMod] = await Promise.all([
+            import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"),
+            import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"),
+            import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js")
+          ]);
+          const app = appMod.initializeApp(CUSTOM_FIREBASE_CONFIG);
+          const auth = authMod.getAuth(app);
+          const db = fsMod.getFirestore(app);
+
+          if (typeof auth.authStateReady === "function") {
+            await auth.authStateReady();
+          }
+          let user = auth.currentUser;
+          if (!user) {
+            const cred = await authMod.signInAnonymously(auth);
+            user = cred.user;
+          }
+
+          state.userId = user.uid;
+          state.fb = { db, auth, ...fsMod };
+          state.cloudEnabled = true;
+          updateSyncStatusUI();
+          return true;
+        } catch (err) {
+          console.error("Firebase başlatma hatası:", err);
+          if (err && err.code === "auth/operation-not-allowed") {
+            showToast("⚠️ Firebase'de Authentication > Anonymous özelliğini açmayı unutmayın!", "warning");
+          }
+          state.cloudEnabled = false;
+          updateSyncStatusUI();
+          return false;
+        }
+      }
+
+      function getRoomCacheKey(roomCode) {
+        return LOCAL_ROOM_STORAGE_PREFIX + normalizeRoomCode(roomCode);
+      }
+
+      function loadLocalRoomData(roomCode) {
+        try {
+          const raw = localStorage.getItem(getRoomCacheKey(roomCode));
+          if (raw) return JSON.parse(raw);
+        } catch (err) {}
+        return null;
+      }
+
+      function persistLocalRoomData() {
+        if (state.cloudEnabled) return;
+        try {
+          const payload = {
+            members: Array.from(state.membersMap.values()),
+            cheers: state.cheers.slice(0, 30),
+            duels: state.duels.slice(0, 20),
+            messages: state.messages.slice(-80),
+            weeklyBet: state.weeklyBet
+          };
+          localStorage.setItem(getRoomCacheKey(state.roomCode), JSON.stringify(payload));
+          if (state.broadcastChannel) {
+            state.broadcastChannel.postMessage({ type: "ROOM_SYNC", roomCode: state.roomCode, payload });
+          }
+        } catch (err) {}
+      }
+
+      function seedPreviewMembersIfEmpty() {
+        if (state.cloudEnabled) return;
+        const cached = loadLocalRoomData(state.roomCode);
+        if (cached && Array.isArray(cached.members) && cached.members.length > 0) {
+          state.membersMap.clear();
+          cached.members.forEach((m) => state.membersMap.set(m.uid, m));
+          state.cheers = Array.isArray(cached.cheers) ? cached.cheers : [];
+          state.duels = Array.isArray(cached.duels) ? cached.duels : [];
+          state.messages = Array.isArray(cached.messages) ? cached.messages : [];
+          if (cached.weeklyBet) state.weeklyBet = cached.weeklyBet;
+          return;
+        }
+
+        const today = getTodayKey();
+        const makeHist = (base) => {
+          const h = {};
+          for (let i = 6; i >= 1; i--) {
+            h[getTodayKey(-i)] = Math.max(800, Math.round(base * (0.55 + Math.random() * 0.85)));
+          }
+          h[today] = base;
+          return h;
+        };
+
+        const av1 = createRandomAvatar();
+        const av2 = createRandomAvatar();
+        const av3 = createRandomAvatar();
+
+        const sampleList = [
+          { uid: "demo_1", name: "Zeynep K.", statusText: "Sabah yürüyüşü harikaydı ☀️", todaySteps: 6420, totalSteps: 48200, xp: 640, coins: 420, streak: 5, avatar: av1 },
+          { uid: "demo_2", name: "Mehmet A.", statusText: "Merdivenleri kullanıyorum 🪜", todaySteps: 5180, totalSteps: 39100, xp: 480, coins: 310, streak: 4, avatar: av2 },
+          { uid: "demo_3", name: "Elif S.", statusText: "Çay molası koridor turu ☕", todaySteps: 4350, totalSteps: 27400, xp: 320, coins: 260, streak: 3, avatar: av3 },
+          { uid: "demo_4", name: "Caner D.", statusText: "Akşam hedefi 8.000! 🎯", todaySteps: 3120, totalSteps: 19800, xp: 210, coins: 190, streak: 2, avatar: createRandomAvatar() },
+          { uid: "demo_5", name: "Burak T.", statusText: "Öğle arası tempolu yürüyüş 👟", todaySteps: 7210, totalSteps: 54300, xp: 820, coins: 540, streak: 6, avatar: createRandomAvatar() },
+          { uid: "demo_6", name: "Deniz Y.", statusText: "Kürsüyü bırakmam 🏆", todaySteps: 5890, totalSteps: 41200, xp: 530, coins: 350, streak: 4, avatar: createRandomAvatar() }
+        ];
+
+        state.membersMap.clear();
+        sampleList.forEach((s) => {
+          state.membersMap.set(s.uid, {
+            ...s,
+            roomCode: state.roomCode,
+            dailyGoal: DEFAULT_DAILY_GOAL,
+            lastActiveDate: today,
+            weeklyHistory: makeHist(s.todaySteps),
+            giftsSent: 1,
+            updatedAt: Date.now()
+          });
+        });
+
+        const now = Date.now();
+        state.messages = [
+          {
+            id: "msg_demo_1",
+            type: "text",
+            roomCode: state.roomCode,
+            fromUid: "demo_1",
+            fromName: "Zeynep K.",
+            fromAvatar: av1,
+            text: "Günaydın ekip! Bugün herkes 5.000 adımı geçiyor mu? 👟☀️",
+            createdAt: now - 1000 * 60 * 18
+          },
+          {
+            id: "msg_demo_2",
+            type: "gift",
+            roomCode: state.roomCode,
+            fromUid: "demo_2",
+            fromName: "Mehmet A.",
+            fromAvatar: av2,
+            targetUid: "demo_1",
+            targetName: "Zeynep K.",
+            giftId: "tea",
+            giftEmoji: "☕",
+            giftName: "Sıcak Çay",
+            giftBonusXp: 15,
+            text: "Sabah enerjisi benden olsun!",
+            createdAt: now - 1000 * 60 * 11
+          },
+          {
+            id: "msg_demo_3",
+            type: "text",
+            roomCode: state.roomCode,
+            fromUid: "demo_3",
+            fromName: "Elif S.",
+            fromAvatar: av3,
+            text: "Öğle arası 15 dakikalık yürüyüş yapalım mı? Sohbetten yazın 💬",
+            createdAt: now - 1000 * 60 * 4
+          }
+        ];
+
+        state.cheers = [
+          {
+            id: "c_welcome",
+            fromName: "Sistem",
+            text: "💬 Sohbet ve 🎁 Hediye Gönderme açıldı! Arkadaşlarına hemen çay veya kupa yolla.",
+            createdAt: now
+          }
+        ];
+        persistLocalRoomData();
+      }
+
+      function clearCloudListeners() {
+        state.unsubscribers.forEach((fn) => {
+          try { fn(); } catch (err) {}
+        });
+        state.unsubscribers = [];
+      }
+
+      function checkIncomingGiftsForMe() {
+        if (!state.myProfile || !Array.isArray(state.messages)) return;
+        let gainedXp = 0;
+        let lastGiftMsg = null;
+
+        state.messages.forEach((msg) => {
+          if (
+            msg.type === "gift" &&
+            msg.fromUid !== state.userId &&
+            (msg.targetUid === state.userId || msg.targetUid === "ALL") &&
+            !state.claimedGiftIds[msg.id]
+          ) {
+            state.claimedGiftIds[msg.id] = true;
+            gainedXp += Math.max(10, Number(msg.giftBonusXp) || 15);
+            lastGiftMsg = msg;
+          }
+        });
+
+        if (gainedXp > 0 && lastGiftMsg) {
+          try {
+            localStorage.setItem(LOCAL_CLAIMED_GIFTS_KEY, JSON.stringify(state.claimedGiftIds));
+          } catch (err) {}
+          saveProfile({
+            ...state.myProfile,
+            xp: (Number(state.myProfile.xp) || 0) + gainedXp
+          });
+          launchConfetti();
+          playChime();
+          showToast(`🎁 ${lastGiftMsg.fromName} sana ${lastGiftMsg.giftEmoji} ${lastGiftMsg.giftName} gönderdi! (+${gainedXp} XP)`, "gift");
+        }
+      }
+
+      let permissionToastShown = false;
+      function handleFirestoreError(contextLabel, err) {
+        console.error(contextLabel, err);
+        if (err && err.code === "permission-denied" && !permissionToastShown) {
+          permissionToastShown = true;
+          showToast("⚠️ Firestore Rules (Güvenlik Kuralları) henüz yayınlanmamış görünüyor!", "warning");
+        }
+      }
+
+      function subscribeToRoomData() {
+        clearCloudListeners();
+        const room = normalizeRoomCode(state.roomCode);
+        state.roomCode = room;
+
+        if (!state.cloudEnabled || !state.fb) {
+          seedPreviewMembersIfEmpty();
+          if (state.myProfile) {
+            state.membersMap.set(state.myProfile.uid, state.myProfile);
+          }
+          rebuildVisibleMembers();
+          checkIncomingGiftsForMe();
+          renderAllViews();
+          return;
+        }
+
+        const { db, collection, doc, query, where, onSnapshot } = state.fb;
+        const base = ["artifacts", APP_ID, "public", "data"];
+
+        // 1) Tüm katılımcılar (Sınırsız)
+        const membersQuery = query(collection(db, ...base, "ofis_members"), where("roomCode", "==", room));
+        state.unsubscribers.push(onSnapshot(membersQuery, (snap) => {
+          state.membersMap.clear();
+          snap.forEach((docSnap) => {
+            const data = docSnap.data();
+            if (data && data.name) state.membersMap.set(docSnap.id, { ...data, uid: docSnap.id });
+          });
+          if (state.myProfile && !state.membersMap.has(state.myProfile.uid)) {
+            state.membersMap.set(state.myProfile.uid, state.myProfile);
+          }
+          rebuildVisibleMembers();
+          renderAllViews();
+        }, (err) => handleFirestoreError("Üye dinleme hatası:", err)));
+
+        // 2) Canlı Sohbet & Hediye Mesajları
+        const msgsQuery = query(collection(db, ...base, "ofis_messages"), where("roomCode", "==", room));
+        state.unsubscribers.push(onSnapshot(msgsQuery, (snap) => {
+          const list = [];
+          snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+          list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+          state.messages = list.slice(-100);
+          if (state.activeTab === "chat") {
+            state.lastReadChatTimestamp = Date.now();
+          }
+          checkIncomingGiftsForMe();
+          renderChatTab();
+          renderReceivedGiftsShowcase();
+          updateChatUnreadBadge();
+        }, (err) => handleFirestoreError("Sohbet dinleme hatası:", err)));
+
+        // 3) Teşvik Akışı
+        const cheersQuery = query(collection(db, ...base, "ofis_cheers"), where("roomCode", "==", room));
+        state.unsubscribers.push(onSnapshot(cheersQuery, (snap) => {
+          const list = [];
+          snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+          list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          state.cheers = list.slice(0, 30);
+          renderCheersFeed();
+        }, (err) => handleFirestoreError("Teşvik dinleme hatası:", err)));
+
+        // 4) 1v1 Düellolar
+        const duelsQuery = query(collection(db, ...base, "ofis_duels"), where("roomCode", "==", room));
+        state.unsubscribers.push(onSnapshot(duelsQuery, (snap) => {
+          const list = [];
+          snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+          list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          state.duels = list;
+          renderActiveDuelBanner();
+        }, (err) => handleFirestoreError("Düello dinleme hatası:", err)));
+
+        // 5) Haftalık İddia
+        state.unsubscribers.push(onSnapshot(doc(db, ...base, "ofis_rooms", room), (snap) => {
+          if (snap.exists() && snap.data().weeklyBet) {
+            state.weeklyBet = snap.data().weeklyBet;
+            const betEl = document.getElementById("weekly-bet-text");
+            if (betEl) betEl.textContent = state.weeklyBet;
+          }
+        }, (err) => handleFirestoreError("Oda ayar dinleme hatası:", err)));
+      }
+
+      function rebuildVisibleMembers() {
+        const list = Array.from(state.membersMap.values()).filter((m) => m && m.name);
+        list.sort((a, b) => {
+          const diff = getEffectiveTodaySteps(b) - getEffectiveTodaySteps(a);
+          if (diff !== 0) return diff;
+          return (b.totalSteps || 0) - (a.totalSteps || 0);
+        });
+        state.visibleMembers = list;
+      }
+
+      async function saveProfile(nextProfile) {
+        const today = getTodayKey();
+        const prev = state.myProfile || {};
+        const prevDate = prev.lastActiveDate || "";
+        let nextStreak = Math.max(1, Number(nextProfile.streak || prev.streak || 1));
+
+        if (prevDate && prevDate !== today) {
+          const yesterday = getTodayKey(-1);
+          nextStreak = prevDate === yesterday ? nextStreak + 1 : 1;
+        }
+
+        const todaySteps = Math.max(0, Math.floor(Number(nextProfile.todaySteps) || 0));
+        const weeklyHistory = { ...(nextProfile.weeklyHistory || prev.weeklyHistory || {}) };
+        weeklyHistory[today] = todaySteps;
+
+        const histKeys = Object.keys(weeklyHistory).sort();
+        while (histKeys.length > 14) {
+          delete weeklyHistory[histKeys.shift()];
+        }
+
+        const coinsVal = typeof nextProfile.coins === "number"
+          ? Math.max(0, Math.floor(nextProfile.coins))
+          : (typeof prev.coins === "number" ? prev.coins : STARTER_COINS);
+
+        const cleanProfile = {
+          uid: state.userId,
+          name: String(nextProfile.name || "Katılımcı").trim().slice(0, 24),
+          roomCode: normalizeRoomCode(nextProfile.roomCode || state.roomCode),
+          statusText: String(nextProfile.statusText || "Canlı yarışta! 👟").trim().slice(0, 40),
+          dailyGoal: Math.min(50000, Math.max(1000, Math.floor(Number(nextProfile.dailyGoal) || DEFAULT_DAILY_GOAL))),
+          todaySteps,
+          totalSteps: Math.max(todaySteps, Math.floor(Number(nextProfile.totalSteps) || 0)),
+          xp: Math.max(0, Math.floor(Number(nextProfile.xp) || 0)),
+          coins: coinsVal,
+          giftsSent: Math.max(0, Math.floor(Number(nextProfile.giftsSent ?? prev.giftsSent ?? 0))),
+          streak: nextStreak,
+          lastActiveDate: today,
+          weeklyHistory,
+          avatar: nextProfile.avatar || prev.avatar || createRandomAvatar(),
+          updatedAt: Date.now()
+        };
+
+        const roomChanged = cleanProfile.roomCode !== state.roomCode;
+        state.myProfile = cleanProfile;
+        state.roomCode = cleanProfile.roomCode;
+        state.membersMap.set(cleanProfile.uid, cleanProfile);
+
+        try {
+          localStorage.setItem(LOCAL_PROFILE_STORAGE_KEY, JSON.stringify(cleanProfile));
+        } catch (err) {}
+
+        rebuildVisibleMembers();
+        updateMediaSessionMetadata();
+        renderAllViews();
+
+        if (state.cloudEnabled && state.fb) {
+          try {
+            const { db, doc, setDoc } = state.fb;
+            await setDoc(doc(db, "artifacts", APP_ID, "public", "data", "ofis_members", cleanProfile.uid), cleanProfile, { merge: true });
+          } catch (err) {
+            handleFirestoreError("Bulut profil kayıt hatası:", err);
+          }
+        } else {
+          persistLocalRoomData();
+        }
+
+        if (roomChanged) {
+          subscribeToRoomData();
+        }
+      }
+
+      // =========================================================================
+      // 6. SOHBET MESAJI & HEDİYE GÖNDERME İŞLEMLERİ
+      // =========================================================================
+      async function sendChatMessage(rawText) {
+        if (!state.myProfile) return;
+        const text = String(rawText || "").trim().slice(0, 220);
+        if (!text) return;
+
+        const msg = {
+          id: "msg_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+          type: "text",
+          roomCode: state.roomCode,
+          fromUid: state.userId,
+          fromName: state.myProfile.name,
+          fromAvatar: state.myProfile.avatar,
+          text,
+          createdAt: Date.now()
+        };
+
+        state.messages = [...state.messages, msg].slice(-100);
+        state.lastReadChatTimestamp = Date.now();
+        renderChatTab(true);
+        updateChatUnreadBadge();
+
+        if (state.cloudEnabled && state.fb) {
+          try {
+            const { db, doc, setDoc } = state.fb;
+            await setDoc(doc(db, "artifacts", APP_ID, "public", "data", "ofis_messages", msg.id), msg);
+          } catch (err) {
+            handleFirestoreError("Mesaj gönderme hatası:", err);
+          }
+        } else {
+          persistLocalRoomData();
+        }
+      }
+
+      async function sendGift(targetUid, giftId, noteText = "") {
+        if (!state.myProfile) return;
+        const gift = GIFT_CATALOG.find((g) => g.id === giftId);
+        if (!gift) return;
+
+        const myCoins = Number(state.myProfile.coins) || 0;
+        if (myCoins < gift.cost) {
+          showToast(`Yetersiz Adım Altını! (${gift.cost} 🪙 gerekli, adım atarak kazanabilirsin)`, "warning");
+          return;
+        }
+
+        let targetName = "Tüm Ekip";
+        let resolvedTargetUid = "ALL";
+        if (targetUid && targetUid !== "ALL") {
+          const targetMember = state.membersMap.get(targetUid);
+          if (targetMember) {
+            targetName = targetMember.name;
+            resolvedTargetUid = targetMember.uid;
+          }
+        }
+
+        const cleanNote = String(noteText || "").trim().slice(0, 80) || gift.desc;
+        const giftMsg = {
+          id: "gift_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+          type: "gift",
+          roomCode: state.roomCode,
+          fromUid: state.userId,
+          fromName: state.myProfile.name,
+          fromAvatar: state.myProfile.avatar,
+          targetUid: resolvedTargetUid,
+          targetName,
+          giftId: gift.id,
+          giftEmoji: gift.emoji,
+          giftName: gift.name,
+          giftCost: gift.cost,
+          giftBonusXp: gift.bonusXp,
+          text: cleanNote,
+          createdAt: Date.now()
+        };
+
+        // Altın düş, gönderene de +20 XP cömertlik ödülü ver
+        await saveProfile({
+          ...state.myProfile,
+          coins: myCoins - gift.cost,
+          xp: (Number(state.myProfile.xp) || 0) + 20,
+          giftsSent: (Number(state.myProfile.giftsSent) || 0) + 1
+        });
+
+        state.messages = [...state.messages, giftMsg].slice(-100);
+        state.lastReadChatTimestamp = Date.now();
+        renderChatTab(true);
+        renderReceivedGiftsShowcase();
+        updateChatUnreadBadge();
+
+        // Aktivite akışına da yansıt
+        await pushCheer(`🎁 ${targetName} için ${gift.emoji} ${gift.name} hediye etti!`, targetName);
+
+        if (state.cloudEnabled && state.fb) {
+          try {
+            const { db, doc, setDoc } = state.fb;
+            await setDoc(doc(db, "artifacts", APP_ID, "public", "data", "ofis_messages", giftMsg.id), giftMsg);
+          } catch (err) {
+            handleFirestoreError("Hediye gönderme hatası:", err);
+          }
+        } else {
+          persistLocalRoomData();
+        }
+
+        launchConfetti();
+        playChime();
+        showToast(`🎁 ${targetName} için ${gift.emoji} ${gift.name} gönderildi! (+20 XP)`, "gift");
+      }
+
+      async function pushCheer(text, targetName = "") {
+        if (!state.myProfile) return;
+        const entry = {
+          id: "ch_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+          roomCode: state.roomCode,
+          fromUid: state.userId,
+          fromName: state.myProfile.name,
+          targetName,
+          text,
+          createdAt: Date.now()
+        };
+        state.cheers = [entry, ...state.cheers].slice(0, 30);
+        renderCheersFeed();
+
+        if (state.cloudEnabled && state.fb) {
+          try {
+            const { db, doc, setDoc } = state.fb;
+            await setDoc(doc(db, "artifacts", APP_ID, "public", "data", "ofis_cheers", entry.id), entry);
+          } catch (err) {}
+        } else {
+          persistLocalRoomData();
+        }
+      }
+
+      async function startDuelWith(targetMember) {
+        if (!state.myProfile || !targetMember || targetMember.uid === state.userId) return;
+        const today = getTodayKey();
+        const duel = {
+          id: "duel_" + today + "_" + [state.userId, targetMember.uid].sort().join("_"),
+          roomCode: state.roomCode,
+          date: today,
+          challengerUid: state.userId,
+          challengerName: state.myProfile.name,
+          opponentUid: targetMember.uid,
+          opponentName: targetMember.name,
+          createdAt: Date.now()
+        };
+        state.duels = [duel, ...state.duels.filter((d) => d.id !== duel.id)];
+        renderActiveDuelBanner();
+        await pushCheer(`⚔️ ${targetMember.name} ile 1v1 adım düellosu başlattı!`, targetMember.name);
+
+        if (state.cloudEnabled && state.fb) {
+          try {
+            const { db, doc, setDoc } = state.fb;
+            await setDoc(doc(db, "artifacts", APP_ID, "public", "data", "ofis_duels", duel.id), duel, { merge: true });
+          } catch (err) {}
+        } else {
+          persistLocalRoomData();
+        }
+        showToast(`⚔️ ${targetMember.name} ile düello başladı!`, "success");
+      }
+
+      async function saveWeeklyBet(newText) {
+        const clean = String(newText || "").trim().slice(0, 90);
+        if (!clean) return;
+        state.weeklyBet = clean;
+        const betEl = document.getElementById("weekly-bet-text");
+        if (betEl) betEl.textContent = clean;
+
+        if (state.cloudEnabled && state.fb) {
+          try {
+            const { db, doc, setDoc } = state.fb;
+            await setDoc(doc(db, "artifacts", APP_ID, "public", "data", "ofis_rooms", state.roomCode), { weeklyBet: clean, updatedAt: Date.now() }, { merge: true });
+          } catch (err) {}
+        } else {
+          persistLocalRoomData();
+        }
+        showToast("🎁 Haftanın iddiası herkes için güncellendi!", "success");
+      }
+
+      // =========================================================================
+      // 7. ADIM EKLEME, DONANIM APK KÖPRÜSÜ, ARKA PLAN & OTOMATİK SENSÖR
+      // =========================================================================
+      function triggerStepPulseVisual() {
+        const el = document.getElementById("pedometer-step-count");
+        if (!el) return;
+        el.classList.remove("step-pop");
+        void el.offsetWidth;
+        el.classList.add("step-pop");
+      }
+
+      function addStepsDelta(delta, silent = false) {
+        const add = Math.max(0, Math.floor(Number(delta) || 0));
+        if (add <= 0 || !state.myProfile) return;
+        const prevToday = getEffectiveTodaySteps(state.myProfile);
+        const nextToday = prevToday + add;
+        const goal = state.myProfile.dailyGoal || DEFAULT_DAILY_GOAL;
+        const justHitGoal = prevToday < goal && nextToday >= goal;
+
+        // Her 10 adımda +1 Adım Altını kazan!
+        const prevCoinMilestone = Math.floor(prevToday / 10);
+        const nextCoinMilestone = Math.floor(nextToday / 10);
+        const earnedCoins = Math.max(0, nextCoinMilestone - prevCoinMilestone);
+
+        triggerStepPulseVisual();
+        saveProfile({
+          ...state.myProfile,
+          todaySteps: nextToday,
+          totalSteps: (Number(state.myProfile.totalSteps) || 0) + add,
+          coins: (Number(state.myProfile.coins) || 0) + earnedCoins
+        });
+
+        if (justHitGoal) {
+          launchConfetti();
+          playChime();
+          showToast(`🎉 Tebrikler! Günlük ${formatNum(goal)} adım hedefine ulaştın!`, "success");
+          pushCheer(`🎯 Günlük ${formatNum(goal)} adım hedefini tamamladı!`);
+        } else if (!silent) {
+          const coinText = earnedCoins > 0 ? ` (+${earnedCoins} 🪙)` : "";
+          showToast(`+${formatNum(add)} adım eklendi!${coinText}`, "success");
+        }
+      }
+
+      function initNativeAndroidBridge() {
+        const bridge = window.AndroidStepBridge;
+        if (!bridge) return false;
+
+        state.nativeApkMode = true;
+        const todayKey = getTodayKey();
+        try {
+          const savedSync = JSON.parse(localStorage.getItem(LOCAL_NATIVE_SYNC_KEY) || "null");
+          if (savedSync && savedSync.date === todayKey) {
+            state.lastSyncedNativeDate = savedSync.date;
+            state.lastSyncedNativeSteps = Number(savedSync.steps) || 0;
+          } else {
+            state.lastSyncedNativeDate = todayKey;
+            state.lastSyncedNativeSteps = 0;
+          }
+        } catch (err) {
+          state.lastSyncedNativeDate = todayKey;
+          state.lastSyncedNativeSteps = 0;
+        }
+
+        document.getElementById("native-apk-badge")?.classList.remove("hidden");
+        const subtitle = document.getElementById("bg-protection-subtitle");
+        if (subtitle) subtitle.textContent = "Android Donanım Adım Sayacı & Ön Plan Servisi ekran kapalıyken de aktif";
+        const workerEl = document.getElementById("bg-worker-status");
+        if (workerEl) {
+          workerEl.textContent = "Ön Plan Servisi ✓";
+          workerEl.className = "font-extrabold text-emerald-300 mt-0.5";
+        }
+
+        const updateBatteryExemptUI = () => {
+          try {
+            const isExempt = typeof bridge.isIgnoringBatteryOptimizations === "function"
+              ? bridge.isIgnoringBatteryOptimizations()
+              : false;
+            const wlEl = document.getElementById("wakelock-status");
+            if (wlEl) {
+              wlEl.textContent = isExempt ? "Pil Muaf ✓" : "İzin Gerekli";
+              wlEl.className = isExempt ? "font-extrabold text-emerald-300 mt-0.5" : "font-extrabold text-amber-300 mt-0.5";
+            }
+            const guideBtn = document.getElementById("open-battery-guide-btn");
+            if (guideBtn) {
+              guideBtn.innerHTML = isExempt
+                ? `<span>✅</span> Pil Optimizasyonu Devre Dışı (Kısıtlanmamış)`
+                : `<span>⚡</span> Tek Dokunuşla Pil Kısıtlamasını Kaldır`;
+            }
+          } catch (err) {}
+        };
+
+        window.onNativeStepsUpdate = function (nativeStepsRaw, sensorLabel) {
+          const nativeSteps = Math.max(0, Math.floor(Number(nativeStepsRaw) || 0));
+          state.nativeSensorType = sensorLabel || "HARDWARE_STEP_COUNTER";
+          state.sensorActive = true;
+          state.sensorReceivingData = true;
+
+          const nowKey = getTodayKey();
+          if (state.lastSyncedNativeDate !== nowKey) {
+            state.lastSyncedNativeDate = nowKey;
+            state.lastSyncedNativeSteps = 0;
+          }
+
+          if (state.myProfile) {
+            const currentToday = getEffectiveTodaySteps(state.myProfile);
+            let delta = 0;
+            if (nativeSteps > state.lastSyncedNativeSteps) {
+              delta = nativeSteps - state.lastSyncedNativeSteps;
+            } else if (nativeSteps < state.lastSyncedNativeSteps) {
+              state.lastSyncedNativeSteps = nativeSteps;
+            }
+            let nextToday = currentToday + delta;
+            if (nativeSteps > nextToday) {
+              delta += (nativeSteps - nextToday);
+            }
+            state.lastSyncedNativeSteps = nativeSteps;
+            try {
+              localStorage.setItem(LOCAL_NATIVE_SYNC_KEY, JSON.stringify({ date: nowKey, steps: nativeSteps }));
+            } catch (err) {}
+            if (delta > 0) addStepsDelta(delta, true);
+          }
+
+          const signalBar = document.getElementById("sensor-signal-bar");
+          const signalLabel = document.getElementById("sensor-signal-label");
+          if (signalBar) signalBar.style.width = "100%";
+          if (signalLabel) signalLabel.textContent = `Donanım: ${formatNum(nativeSteps)} adım`;
+
+          updateBatteryExemptUI();
+          updateSensorUI();
+        };
+
+        updateBatteryExemptUI();
+        try {
+          if (typeof bridge.getTodaySteps === "function") {
+            window.onNativeStepsUpdate(bridge.getTodaySteps(), "HARDWARE_STEP_COUNTER");
+          }
+        } catch (err) {}
+        return true;
+      }
+
+      function initBackgroundWorker() {
+        if (state.nativeApkMode || state.bgWorker) return;
+        try {
+          const blob = new Blob([`setInterval(() => { postMessage({ type: "TICK" }); }, 4000);`], { type: "application/javascript" });
+          const worker = new Worker(URL.createObjectURL(blob));
+          worker.onmessage = () => {
+            if (state.pendingSensorSteps > 0) flushPendingSensorSteps();
+          };
+          state.bgWorker = worker;
+          const workerEl = document.getElementById("bg-worker-status");
+          if (workerEl) {
+            workerEl.textContent = "Web Worker ✓";
+            workerEl.className = "font-extrabold text-emerald-300 mt-0.5";
+          }
+        } catch (err) {}
+      }
+
+      async function requestWakeLockSafe() {
+        if (state.nativeApkMode || !state.bgKeepAliveEnabled) return;
+        try {
+          if ("wakeLock" in navigator && !state.wakeLock) {
+            state.wakeLock = await navigator.wakeLock.request("screen");
+            state.wakeLock.addEventListener("release", () => { state.wakeLock = null; });
+            const wlEl = document.getElementById("wakelock-status");
+            if (wlEl) {
+              wlEl.textContent = "WakeLock Aktif ✓";
+              wlEl.className = "font-extrabold text-emerald-300 mt-0.5";
+            }
+          }
+        } catch (err) {}
+      }
+
+      function updateMediaSessionMetadata() {
+        if (!("mediaSession" in navigator) || !state.myProfile) return;
+        try {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: `Ofis Adım — ${formatNum(getEffectiveTodaySteps(state.myProfile))} adım`,
+            artist: `${state.myProfile.name} • ${state.visibleMembers.length} Katılımcı`,
+            album: `Sistem: ${state.roomCode}`
+          });
+        } catch (err) {}
+      }
+
+      function toggleBackgroundKeepAlive(enable) {
+        state.bgKeepAliveEnabled = typeof enable === "boolean" ? enable : !state.bgKeepAliveEnabled;
+        const btn = document.getElementById("toggle-bg-keepalive-btn");
+        if (btn) {
+          btn.textContent = state.bgKeepAliveEnabled ? "Açık ✓" : "Kapalı";
+          btn.className = state.bgKeepAliveEnabled
+            ? "px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 transition text-slate-950 text-[11px] font-black shrink-0"
+            : "px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 active:scale-95 transition text-white text-[11px] font-black shrink-0";
+        }
+        if (state.bgKeepAliveEnabled) {
+          initBackgroundWorker();
+          requestWakeLockSafe();
+        } else if (state.wakeLock) {
+          try { state.wakeLock.release(); } catch (err) {}
+          state.wakeLock = null;
+        }
+      }
+
+      function flushPendingSensorSteps() {
+        if (state.pendingSensorSteps <= 0) return;
+        const count = state.pendingSensorSteps;
+        state.pendingSensorSteps = 0;
+        addStepsDelta(count, true);
+      }
+
+      function handleDeviceMotion(event) {
+        if (!state.sensorActive || state.nativeApkMode) return;
+        const acc = event.accelerationIncludingGravity || event.acceleration;
+        if (!acc) return;
+        const mag = Math.sqrt((acc.x || 0) ** 2 + (acc.y || 0) ** 2 + (acc.z || 0) ** 2);
+        const delta = Math.abs(mag - state.lastAccelMag);
+        state.lastAccelMag = mag;
+        state.sensorReceivingData = true;
+
+        const thresholds = { 1: 3.1, 2: 2.2, 3: 1.5 };
+        const threshold = thresholds[state.sensitivityLevel] || 2.2;
+
+        const bar = document.getElementById("sensor-signal-bar");
+        const label = document.getElementById("sensor-signal-label");
+        if (bar) bar.style.width = `${Math.min(100, Math.max(8, Math.round(delta * 26)))}%`;
+        if (label) label.textContent = `İvme: ${delta.toFixed(1)} m/s²`;
+
+        const now = Date.now();
+        if (delta > threshold && now - state.lastStepTimestamp > 330) {
+          state.lastStepTimestamp = now;
+          state.pendingSensorSteps += 1;
+          if (state.pendingSensorSteps >= 5) {
+            flushPendingSensorSteps();
+          } else {
+            clearTimeout(state.sensorFlushTimer);
+            state.sensorFlushTimer = setTimeout(flushPendingSensorSteps, 1200);
+          }
+        }
+      }
+
+      async function autoStartMotionSensor(fromUserGesture = false) {
+        if (state.nativeApkMode) {
+          state.sensorActive = true;
+          state.sensorReceivingData = true;
+          updateSensorUI();
+          return;
+        }
+        if (state.sensorActive || state.sensorManuallyPaused) return;
+        if (typeof window.DeviceMotionEvent === "undefined") {
+          updateSensorUI();
+          return;
+        }
+        if (typeof window.DeviceMotionEvent.requestPermission === "function") {
+          if (!fromUserGesture) {
+            updateSensorUI();
+            return;
+          }
+          try {
+            const res = await window.DeviceMotionEvent.requestPermission();
+            if (res !== "granted") {
+              showToast("Hareket sensörü izni verilmedi.", "warning");
+              return;
+            }
+          } catch (err) {
+            return;
+          }
+        }
+        window.addEventListener("devicemotion", handleDeviceMotion);
+        state.sensorActive = true;
+        updateSensorUI();
+      }
+
+      function toggleStepSensor() {
+        if (state.nativeApkMode) {
+          if (window.AndroidStepBridge && typeof window.AndroidStepBridge.getTodaySteps === "function") {
+            window.onNativeStepsUpdate(window.AndroidStepBridge.getTodaySteps(), "HARDWARE_STEP_COUNTER");
+          }
+          showToast("Android donanım adım sayacı ekran kapalıyken de 7/24 aktif! 📡", "success");
+          return;
+        }
+        if (state.sensorActive) {
+          window.removeEventListener("devicemotion", handleDeviceMotion);
+          flushPendingSensorSteps();
+          state.sensorActive = false;
+          state.sensorManuallyPaused = true;
+          updateSensorUI();
+          showToast("Sensör duraklatıldı.", "info");
+        } else {
+          state.sensorManuallyPaused = false;
+          autoStartMotionSensor(true);
+          showToast("Hareket sensörü başlatıldı! 👟", "success");
+        }
+      }
+
+      function updateSensorUI() {
+        const btn = document.getElementById("toggle-sensor-btn");
+        const icon = document.getElementById("toggle-sensor-icon");
+        const label = document.getElementById("toggle-sensor-label");
+        const chip = document.getElementById("sensor-status-chip");
+        const detail = document.getElementById("sensor-detail-text");
+        const wave = document.getElementById("sensor-wave-dots");
+        if (!btn || !chip) return;
+
+        if (state.sensorActive) {
+          btn.className = "w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 active:scale-[0.98] transition text-white font-extrabold text-sm shadow-md shadow-rose-500/25 flex items-center justify-center gap-2";
+          icon.textContent = state.nativeApkMode ? "📡" : "⏸️";
+          label.textContent = state.nativeApkMode ? "Android Donanım Sensörü 7/24 Aktif" : "Otomatik Sensörü Duraklat";
+          chip.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200";
+          chip.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> ${state.nativeApkMode ? "Donanım 7/24" : (state.sensorReceivingData ? "Canlı Sayıyor" : "Otomatik Aktif")}`;
+          if (detail) {
+            detail.textContent = state.nativeApkMode
+              ? "Ekran tamamen kapalıyken dahi telefonun donanım çipi adımları sayar"
+              : "Sensör aktif • Yürürken adımlarınız anlık tüm katılımcılarla eşitlenir";
+          }
+          if (wave) { wave.classList.remove("hidden"); wave.classList.add("flex"); }
+        } else {
+          btn.className = "w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-[0.98] transition text-white font-extrabold text-sm shadow-md shadow-indigo-500/25 flex items-center justify-center gap-2";
+          icon.textContent = "▶️";
+          label.textContent = "Hareket Sensörünü Başlat";
+          chip.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200";
+          chip.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span> Duraklatıldı`;
+          if (detail) detail.textContent = "Canlı adım sayımı için başlat butonuna dokunun";
+          if (wave) { wave.classList.add("hidden"); wave.classList.remove("flex"); }
+        }
+      }
+
+      // =========================================================================
+      // 8. GÖREVLER VE ÖDÜLLER
+      // =========================================================================
+      function loadClaimedState() {
+        try {
+          const raw = JSON.parse(localStorage.getItem(LOCAL_MISSIONS_KEY) || "null");
+          state.claimedTodayMissions = (raw && raw.date === getTodayKey()) ? (raw.claimed || {}) : {};
+        } catch (err) {
+          state.claimedTodayMissions = {};
+        }
+        try {
+          state.claimedGiftIds = JSON.parse(localStorage.getItem(LOCAL_CLAIMED_GIFTS_KEY) || "{}") || {};
+        } catch (err) {
+          state.claimedGiftIds = {};
+        }
+      }
+
+      function saveClaimedMissions() {
+        try {
+          localStorage.setItem(LOCAL_MISSIONS_KEY, JSON.stringify({
+            date: getTodayKey(),
+            claimed: state.claimedTodayMissions
+          }));
+        } catch (err) {}
+      }
+
+      function claimMissionReward(missionId, xpReward, coinReward = 30, bonusSteps = 0, label = "Görev") {
+        if (!state.myProfile || state.claimedTodayMissions[missionId]) return;
+        state.claimedTodayMissions[missionId] = true;
+        saveClaimedMissions();
+
+        const todaySteps = getEffectiveTodaySteps(state.myProfile) + bonusSteps;
+        saveProfile({
+          ...state.myProfile,
+          xp: (Number(state.myProfile.xp) || 0) + xpReward,
+          coins: (Number(state.myProfile.coins) || 0) + coinReward,
+          todaySteps,
+          totalSteps: (Number(state.myProfile.totalSteps) || 0) + bonusSteps
+        });
+
+        launchConfetti();
+        playChime();
+        showToast(`🎉 ${label} tamamlandı! +${xpReward} XP & +${coinReward} 🪙`, "success");
+      }
+
+      // =========================================================================
+      // 9. ARAYÜZ RENDER FONKSİYONLARI
+      // =========================================================================
+      function renderHeader() {
+        const dateEl = document.getElementById("header-date-label");
+        const roomEl = document.getElementById("header-room-badge");
+        const countEl = document.getElementById("member-count-pill");
+        const coinsEl = document.getElementById("header-coins-value");
+        const chatCoinsEl = document.getElementById("chat-coins-mini");
+        const avatarSlot = document.getElementById("header-avatar-slot");
+
+        if (dateEl) dateEl.textContent = getTurkishDateFormatted();
+        if (roomEl) roomEl.textContent = state.roomCode === DEFAULT_ROOM_CODE ? "🌐 GENEL" : `🔑 ${state.roomCode}`;
+        if (countEl) countEl.textContent = `👥 ${state.visibleMembers.length} Kişi`;
+
+        const myCoins = state.myProfile ? (Number(state.myProfile.coins) || 0) : STARTER_COINS;
+        if (coinsEl) coinsEl.textContent = formatNum(myCoins);
+        if (chatCoinsEl) chatCoinsEl.textContent = `${formatNum(myCoins)} 🪙`;
+
+        if (avatarSlot && state.myProfile) {
+          const isLeader = state.visibleMembers.length > 0 && state.visibleMembers[0].uid === state.userId && getEffectiveTodaySteps(state.myProfile) > 0;
+          avatarSlot.innerHTML = renderAvatarSVG(state.myProfile.avatar, 38, isLeader);
+        }
+      }
+
+      function updateChatUnreadBadge() {
+        const badge = document.getElementById("chat-unread-badge");
+        const previewCount = document.getElementById("race-chat-preview-count");
+        const unread = state.messages.filter((m) => m.fromUid !== state.userId && (m.createdAt || 0) > state.lastReadChatTimestamp).length;
+
+        if (badge) {
+          if (state.activeTab !== "chat" && unread > 0) {
+            badge.textContent = unread > 9 ? "9+" : String(unread);
+            badge.classList.remove("hidden");
+            badge.classList.add("flex");
+          } else {
+            badge.classList.add("hidden");
+            badge.classList.remove("flex");
+          }
+        }
+        if (previewCount) {
+          previewCount.textContent = unread > 0
+            ? `${unread} yeni mesaj!`
+            : `${state.messages.length} mesaj • Sohbete katıl`;
+        }
+      }
+
+      function renderChatTab(scrollToBottom = false) {
+        const listEl = document.getElementById("chat-messages-list");
+        const onlineBadge = document.getElementById("chat-online-badge");
+        if (onlineBadge) onlineBadge.textContent = `👥 ${state.visibleMembers.length} kişi`;
+        if (!listEl) return;
+
+        if (!state.messages || state.messages.length === 0) {
+          listEl.innerHTML = `
+            <div class="h-full flex flex-col items-center justify-center text-center py-10 space-y-2 text-slate-400">
+              <div class="text-4xl">💬</div>
+              <div class="text-xs font-black text-slate-600">Sohbet henüz boş!</div>
+              <p class="text-[11px] max-w-[220px]">İlk mesajı yaz veya 🎁 butonuna dokunup arkadaşlarına sürpriz hediye gönder!</p>
+            </div>
+          `;
+          return;
+        }
+
+        listEl.innerHTML = state.messages.map((m) => {
+          const isMe = m.fromUid === state.userId;
+          const timeStr = formatTimeHHMM(m.createdAt);
+          const senderMember = state.membersMap.get(m.fromUid);
+          const avatarData = m.fromAvatar || (senderMember && senderMember.avatar) || null;
+
+          // HEDİYE KUTLAMA BALONU
+          if (m.type === "gift") {
+            return `
+              <div class="gift-bubble-anim rounded-3xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 p-[2px] shadow-md">
+                <div class="rounded-[22px] bg-gradient-to-br from-rose-50 via-white to-amber-50 p-3 space-y-1.5">
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-pink-100 to-amber-100 flex items-center justify-center text-2xl shrink-0 shadow-inner">${escapeHtml(m.giftEmoji || "🎁")}</div>
+                      <div class="min-w-0">
+                        <div class="text-[11px] font-black text-rose-700 leading-tight">
+                          ${escapeHtml(m.fromName)} → ${escapeHtml(m.targetName || "Tüm Ekip")}
+                        </div>
+                        <div class="text-xs font-black text-slate-900">
+                          ${escapeHtml(m.giftName || "Sürpriz Hediye")} gönderdi!
+                        </div>
+                      </div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black shrink-0">+${m.giftBonusXp || 15} XP</span>
+                  </div>
+                  ${m.text ? `<div class="text-[11px] font-semibold text-slate-700 bg-white/80 rounded-xl px-2.5 py-1.5 border border-rose-100">"${escapeHtml(m.text)}"</div>` : ""}
+                  <div class="flex items-center justify-between text-[10px] text-slate-400 font-bold pt-0.5">
+                    <span>🎁 Hediye Kutlaması</span>
+                    <span>${timeStr}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          // NORMAL SOHBET MESAJI BALONU
+          if (isMe) {
+            return `
+              <div class="flex items-end justify-end gap-2">
+                <div class="max-w-[78%] rounded-2xl rounded-br-md bg-gradient-to-br from-indigo-600 to-violet-600 text-white px-3.5 py-2 shadow-sm">
+                  <div class="text-xs font-semibold leading-relaxed break-words">${escapeHtml(m.text)}</div>
+                  <div class="text-[9px] text-indigo-200 font-bold text-right mt-1">${timeStr} ✓</div>
+                </div>
+              </div>
+            `;
+          }
+
+          return `
+            <div class="flex items-end gap-2">
+              <button type="button" data-open-member="${escapeHtml(m.fromUid)}" class="open-member-action-btn w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                ${renderAvatarSVG(avatarData, 30, false)}
+              </button>
+              <div class="max-w-[78%] rounded-2xl rounded-bl-md bg-white border border-slate-200/80 px-3.5 py-2 shadow-sm">
+                <div class="flex items-center justify-between gap-3 mb-0.5">
+                  <span class="text-[11px] font-black text-indigo-700">${escapeHtml(m.fromName)}</span>
+                  <span class="text-[9px] font-bold text-slate-400">${timeStr}</span>
+                </div>
+                <div class="text-xs font-medium text-slate-800 leading-relaxed break-words">${escapeHtml(m.text)}</div>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        if (scrollToBottom || state.activeTab === "chat") {
+          requestAnimationFrame(() => {
+            listEl.scrollTop = listEl.scrollHeight;
+          });
+        }
+      }
+
+      function renderReceivedGiftsShowcase() {
+        const grid = document.getElementById("received-gifts-grid");
+        const totalPill = document.getElementById("received-gifts-total-pill");
+        if (!grid) return;
+
+        const counts = {};
+        let totalReceived = 0;
+        state.messages.forEach((m) => {
+          if (m.type === "gift" && (m.targetUid === state.userId || (m.targetUid === "ALL" && m.fromUid !== state.userId))) {
+            counts[m.giftId] = (counts[m.giftId] || 0) + 1;
+            totalReceived++;
+          }
+        });
+
+        if (totalPill) totalPill.textContent = `${totalReceived} Hediye`;
+
+        grid.innerHTML = GIFT_CATALOG.map((g) => {
+          const cnt = counts[g.id] || 0;
+          return `
+            <div class="rounded-2xl p-2.5 text-center ${cnt > 0 ? "bg-white/25 border border-white/40" : "bg-black/15 opacity-70"}">
+              <div class="text-2xl">${g.emoji}</div>
+              <div class="text-[10px] font-extrabold mt-0.5 truncate">${g.name}</div>
+              <div class="text-xs font-black mt-0.5">x${cnt}</div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function renderGiftModalContent(preselectUid = "") {
+        const selectEl = document.getElementById("gift-recipient-select");
+        const gridEl = document.getElementById("gift-catalog-grid");
+        const coinsEl = document.getElementById("gift-modal-coins");
+        const myCoins = state.myProfile ? (Number(state.myProfile.coins) || 0) : STARTER_COINS;
+
+        if (coinsEl) coinsEl.textContent = `🪙 ${formatNum(myCoins)}`;
+
+        if (selectEl) {
+          const others = state.visibleMembers.filter((m) => m.uid !== state.userId);
+          const options = [
+            `<option value="ALL">🎉 Tüm Ekibe (${state.visibleMembers.length} Kişi)</option>`,
+            ...others.map((m) => `<option value="${escapeHtml(m.uid)}">👤 ${escapeHtml(m.name)} (${formatNum(getEffectiveTodaySteps(m))} adım)</option>`)
+          ];
+          selectEl.innerHTML = options.join("");
+          if (preselectUid && others.some((m) => m.uid === preselectUid)) {
+            selectEl.value = preselectUid;
+          }
+        }
+
+        if (gridEl) {
+          gridEl.innerHTML = GIFT_CATALOG.map((g) => {
+            const selected = state.selectedGiftId === g.id;
+            const canAfford = myCoins >= g.cost;
+            return `
+              <button type="button" data-select-gift="${g.id}"
+                class="select-gift-btn rounded-2xl p-3 border text-left transition bg-gradient-to-br ${g.color} ${selected ? "ring-2 ring-rose-500 scale-[1.02] shadow-md" : "opacity-90"} ${!canAfford ? "opacity-55" : ""}">
+                <div class="flex items-center justify-between">
+                  <span class="text-2xl">${g.emoji}</span>
+                  <span class="px-2 py-0.5 rounded-full ${g.cost === 0 ? "bg-emerald-600 text-white" : "bg-white/90 text-amber-900"} text-[10px] font-black">
+                    ${g.cost === 0 ? "Ücretsiz" : `🪙 ${g.cost}`}
+                  </span>
+                </div>
+                <div class="text-xs font-black text-slate-900 mt-1.5">${g.name}</div>
+                <div class="text-[10px] font-bold text-slate-600">+${g.bonusXp} XP alıcıya</div>
+              </button>
+            `;
+          }).join("");
+        }
+      }
+
+      function openGiftModal(preselectUid = "") {
+        renderGiftModalContent(preselectUid);
+        const noteIn = document.getElementById("gift-note-input");
+        if (noteIn) noteIn.value = "";
+        document.getElementById("gift-modal")?.classList.remove("hidden");
+      }
+
+      function renderActiveDuelBanner() {
+        const banner = document.getElementById("active-duel-banner");
+        if (!banner || !state.myProfile) return;
+        const today = getTodayKey();
+        const myDuel = state.duels.find((d) =>
+          d.date === today && (d.challengerUid === state.userId || d.opponentUid === state.userId)
+        );
+        if (!myDuel) {
+          banner.classList.add("hidden");
+          return;
+        }
+        const oppUid = myDuel.challengerUid === state.userId ? myDuel.opponentUid : myDuel.challengerUid;
+        const oppName = myDuel.challengerUid === state.userId ? myDuel.opponentName : myDuel.challengerName;
+        const oppMember = state.membersMap.get(oppUid);
+        const mySteps = getEffectiveTodaySteps(state.myProfile);
+        const oppSteps = oppMember ? getEffectiveTodaySteps(oppMember) : 0;
+        const total = Math.max(1, mySteps + oppSteps);
+        const myPct = Math.min(88, Math.max(12, Math.round((mySteps / total) * 100)));
+        const diff = mySteps - oppSteps;
+        const statusLine = diff > 0
+          ? `🔥 ${formatNum(diff)} adım öndesin!`
+          : (diff < 0 ? `⚡ Yakalamak için ${formatNum(Math.abs(diff))} adım kaldı!` : "🤝 Başa baş gidiyorsunuz!");
+
+        banner.classList.remove("hidden");
+        banner.innerHTML = `
+          <div class="flex items-center justify-between text-xs font-black mb-2">
+            <span>⚔️ CANLI 1v1 DÜELLO</span>
+            <span class="px-2 py-0.5 rounded-full bg-white/20 text-[10px]">Bugün</span>
+          </div>
+          <div class="flex items-center justify-between text-xs font-extrabold mb-1.5">
+            <span>Sen (${formatNum(mySteps)})</span>
+            <span>${escapeHtml(oppName)} (${formatNum(oppSteps)})</span>
+          </div>
+          <div class="h-3 rounded-full bg-black/25 overflow-hidden flex">
+            <div class="h-full bg-emerald-300 transition-all duration-500" style="width:${myPct}%"></div>
+            <div class="h-full bg-amber-200 flex-1"></div>
+          </div>
+          <div class="text-[11px] font-bold text-white/95 mt-2 text-center">${statusLine}</div>
+        `;
+      }
+
+      function renderRaceTrack() {
+        const lanesEl = document.getElementById("race-track-lanes");
+        const totalEl = document.getElementById("team-total-steps");
+        const toggleBtn = document.getElementById("toggle-all-lanes-btn");
+        if (!lanesEl) return;
+
+        const all = state.visibleMembers;
+        const sum = all.reduce((acc, m) => acc + getEffectiveTodaySteps(m), 0);
+        if (totalEl) totalEl.textContent = formatNum(sum);
+
+        if (all.length === 0) {
+          lanesEl.innerHTML = `<div class="text-center py-6 text-xs text-slate-400 font-bold">Henüz katılımcı yok. İlk adımı sen at!</div>`;
+          if (toggleBtn) toggleBtn.classList.add("hidden");
+          return;
+        }
+
+        const maxSteps = Math.max(DEFAULT_DAILY_GOAL, ...all.map((m) => getEffectiveTodaySteps(m)));
+        let displayed = all;
+        const MAX_COMPACT = 8;
+        if (!state.showAllTrackLanes && all.length > MAX_COMPACT) {
+          const topList = all.slice(0, MAX_COMPACT);
+          if (!topList.some((m) => m.uid === state.userId)) {
+            const me = all.find((m) => m.uid === state.userId);
+            if (me) topList.push(me);
+          }
+          displayed = topList;
+          if (toggleBtn) {
+            toggleBtn.classList.remove("hidden");
+            toggleBtn.textContent = `Tüm Katılımcıları Pistte Göster (${all.length} Kişi) ▼`;
+          }
+        } else if (all.length > MAX_COMPACT && toggleBtn) {
+          toggleBtn.classList.remove("hidden");
+          toggleBtn.textContent = `Sadece İlk ${MAX_COMPACT} Kişiyi Göster ▲`;
+        } else if (toggleBtn) {
+          toggleBtn.classList.add("hidden");
+        }
+
+        lanesEl.innerHTML = displayed.map((m) => {
+          const rankIdx = all.findIndex((x) => x.uid === m.uid);
+          const steps = getEffectiveTodaySteps(m);
+          const pct = Math.min(92, Math.max(4, Math.round((steps / maxSteps) * 92)));
+          const isMe = m.uid === state.userId;
+          const isLeader = rankIdx === 0 && steps > 0;
+          const barColor = isMe ? "from-indigo-500 to-violet-500" : (isLeader ? "from-amber-400 to-orange-500" : "from-sky-400 to-indigo-400");
+
+          return `
+            <div class="rounded-2xl px-2.5 py-2 ${isMe ? "bg-indigo-50/90 border border-indigo-200" : "bg-slate-50 border border-slate-100"}">
+              <div class="flex items-center justify-between text-[11px] mb-1">
+                <div class="flex items-center gap-1.5 min-w-0">
+                  <span class="font-black ${isLeader ? "text-amber-600" : "text-slate-400"}">#${rankIdx + 1}</span>
+                  <span class="font-extrabold text-slate-800 truncate">${escapeHtml(m.name)}</span>
+                  ${isMe ? `<span class="px-1.5 py-0.2 rounded-full bg-indigo-600 text-white text-[9px] font-black">SEN</span>` : ""}
+                </div>
+                <span class="font-black text-slate-700 shrink-0">${formatNum(steps)}</span>
+              </div>
+              <div class="relative h-7 rounded-full bg-slate-200/75 overflow-visible flex items-center">
+                <div class="h-full rounded-full bg-gradient-to-r ${barColor} transition-all duration-500" style="width:${pct}%"></div>
+                <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-all duration-500 ${steps > 0 ? "animate-walk" : ""}" style="left:${pct}%">
+                  ${renderAvatarSVG(m.avatar, 30, isLeader)}
+                </div>
+                <span class="absolute right-2 text-[11px] opacity-60">🏁</span>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function renderMyRankBanner() {
+        const el = document.getElementById("my-rank-banner");
+        if (!el || !state.myProfile) return;
+        const total = state.visibleMembers.length;
+        const idx = state.visibleMembers.findIndex((m) => m.uid === state.userId);
+        const myRank = idx >= 0 ? idx + 1 : 1;
+        const mySteps = getEffectiveTodaySteps(state.myProfile);
+        let tip = "👑 Zirvedesin, tempoyu koru!";
+        if (idx > 0) {
+          const above = state.visibleMembers[idx - 1];
+          const gap = Math.max(1, getEffectiveTodaySteps(above) - mySteps + 1);
+          tip = `⬆️ ${above.name} için ${formatNum(gap)} adım!`;
+        }
+        el.innerHTML = `
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="px-2.5 py-1 rounded-xl bg-indigo-600 text-white text-xs font-black shrink-0">#${myRank} / ${total}</span>
+            <div class="min-w-0">
+              <div class="text-xs font-black text-slate-800 truncate">Senin Sıralaman</div>
+              <div class="text-[11px] font-bold text-indigo-700 truncate">${escapeHtml(tip)}</div>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-sm font-black text-indigo-700">${formatNum(mySteps)}</div>
+            <div class="text-[10px] font-bold text-slate-500">adım</div>
+          </div>
+        `;
+      }
+
+      function renderCheersFeed() {
+        const el = document.getElementById("cheers-feed");
+        if (!el) return;
+        if (!state.cheers || state.cheers.length === 0) {
+          el.innerHTML = `<div class="text-[11px] text-slate-400 text-center py-2">İlk teşviki sen gönder! 🔥</div>`;
+          return;
+        }
+        el.innerHTML = state.cheers.slice(0, 12).map((c) => {
+          const targetPart = c.targetName ? ` → <strong>${escapeHtml(c.targetName)}</strong>` : "";
+          return `
+            <div class="text-[11px] bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-1.5 text-slate-700">
+              <strong class="text-indigo-700">${escapeHtml(c.fromName)}</strong>${targetPart}: ${escapeHtml(c.text)}
+            </div>
+          `;
+        }).join("");
+      }
+
+      function renderLeaderboard() {
+        const listEl = document.getElementById("leaderboard-list");
+        const countBadge = document.getElementById("leaderboard-total-badge");
+        if (!listEl) return;
+
+        const all = state.visibleMembers;
+        if (countBadge) countBadge.textContent = `${all.length} kişi`;
+
+        const q = state.searchQuery.trim().toLowerCase();
+        const filtered = q
+          ? all.filter((m) => (m.name || "").toLowerCase().includes(q) || (m.statusText || "").toLowerCase().includes(q))
+          : all;
+
+        if (filtered.length === 0) {
+          listEl.innerHTML = `<div class="rounded-3xl bg-white p-6 text-center text-xs font-bold text-slate-400 border border-slate-100">Aramanla eşleşen katılımcı bulunamadı.</div>`;
+          return;
+        }
+
+        listEl.innerHTML = filtered.map((m) => {
+          const rankIdx = all.findIndex((x) => x.uid === m.uid);
+          const steps = getEffectiveTodaySteps(m);
+          const goal = m.dailyGoal || DEFAULT_DAILY_GOAL;
+          const pct = Math.min(100, Math.round((steps / goal) * 100));
+          const isMe = m.uid === state.userId;
+          const isLeader = rankIdx === 0 && steps > 0;
+          const medal = rankIdx === 0 ? "🥇" : (rankIdx === 1 ? "🥈" : (rankIdx === 2 ? "🥉" : `#${rankIdx + 1}`));
+          const rankTitle = getRankInfo(m.xp || 0).current.title;
+
+          return `
+            <div class="rounded-3xl bg-white p-3.5 shadow-card border ${isMe ? "border-indigo-300 ring-2 ring-indigo-100" : "border-slate-100"} transition">
+              <div class="flex items-center gap-3">
+                <div class="w-7 text-center text-sm font-black ${rankIdx < 3 ? "" : "text-slate-400 text-xs"} shrink-0">${medal}</div>
+                <div class="w-12 h-12 rounded-2xl ${isMe ? "bg-indigo-50" : "bg-slate-50"} flex items-center justify-center shrink-0">
+                  ${renderAvatarSVG(m.avatar, 44, isLeader)}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="text-sm font-black text-slate-900 truncate">${escapeHtml(m.name)}</span>
+                      ${isMe ? `<span class="px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-[9px] font-black shrink-0">SEN</span>` : ""}
+                    </div>
+                    <span class="text-sm font-black text-indigo-600 shrink-0">${formatNum(steps)}</span>
+                  </div>
+                  <div class="text-[11px] text-slate-500 truncate mt-0.5">${escapeHtml(m.statusText || rankTitle)}</div>
+                  <div class="flex items-center gap-2 mt-1.5">
+                    <div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                      <div class="h-full rounded-full ${pct >= 100 ? "bg-emerald-500" : "bg-indigo-500"}" style="width:${pct}%"></div>
+                    </div>
+                    <span class="text-[10px] font-extrabold text-slate-400 shrink-0">%${pct}</span>
+                    ${!isMe ? `<button type="button" data-open-member="${escapeHtml(m.uid)}" class="open-member-action-btn px-2 py-0.5 rounded-lg bg-pink-50 hover:bg-pink-100 text-rose-700 text-[10px] font-black shrink-0">🎁 / ⚔️</button>` : ""}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function renderWeeklyView() {
+        const podiumEl = document.getElementById("weekly-podium");
+        const listEl = document.getElementById("weekly-list");
+        const countEl = document.getElementById("weekly-member-count");
+        const betEl = document.getElementById("weekly-bet-text");
+        if (!podiumEl || !listEl) return;
+
+        if (betEl) betEl.textContent = state.weeklyBet;
+        const sorted = [...state.visibleMembers].sort((a, b) => getWeeklyTotalSteps(b) - getWeeklyTotalSteps(a));
+        if (countEl) countEl.textContent = `${sorted.length} kişi`;
+
+        const slots = [
+          { idx: 1, medal: "🥈", height: "h-20", bg: "from-slate-200 to-slate-300 text-slate-800" },
+          { idx: 0, medal: "🥇", height: "h-28", bg: "from-amber-400 to-orange-400 text-white" },
+          { idx: 2, medal: "🥉", height: "h-16", bg: "from-orange-200 to-amber-300 text-amber-950" }
+        ];
+
+        podiumEl.innerHTML = slots.map((s) => {
+          const m = sorted[s.idx];
+          if (!m) return `<div class="text-center opacity-40"><div class="${s.height} rounded-t-2xl bg-slate-100 flex items-center justify-center text-xs font-bold">—</div></div>`;
+          return `
+            <div class="flex flex-col items-center">
+              <div class="mb-1">${renderAvatarSVG(m.avatar, s.idx === 0 ? 54 : 44, s.idx === 0)}</div>
+              <div class="text-[11px] font-black text-slate-800 truncate max-w-full px-1">${escapeHtml(m.name)}</div>
+              <div class="text-[10px] font-extrabold text-indigo-600 mb-1.5">${formatNum(getWeeklyTotalSteps(m))}</div>
+              <div class="w-full ${s.height} rounded-t-2xl bg-gradient-to-b ${s.bg} flex flex-col items-center justify-center shadow-inner">
+                <span class="text-xl">${s.medal}</span>
+                <span class="text-[10px] font-black mt-0.5">#${s.idx + 1}</span>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        listEl.innerHTML = sorted.map((m, idx) => {
+          const arr = getWeeklyStepsArray(m);
+          const wTotal = arr.reduce((a, b) => a + b, 0);
+          const maxBar = Math.max(1000, ...arr);
+          const isMe = m.uid === state.userId;
+          const barsHtml = arr.map((v, bi) => {
+            const h = Math.max(12, Math.round((v / maxBar) * 100));
+            return `<div class="flex-1 h-7 bg-slate-100 rounded-sm flex items-end overflow-hidden"><div class="w-full ${bi === 6 ? "bg-indigo-600" : "bg-indigo-300"} rounded-sm" style="height:${h}%"></div></div>`;
+          }).join("");
+
+          return `
+            <div class="rounded-3xl bg-white p-3.5 shadow-card border ${isMe ? "border-indigo-300 ring-2 ring-indigo-100" : "border-slate-100"} space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <span class="text-xs font-black text-slate-400 w-6">#${idx + 1}</span>
+                  ${renderAvatarSVG(m.avatar, 36, idx === 0)}
+                  <div class="min-w-0">
+                    <div class="text-xs font-black text-slate-900 truncate">${escapeHtml(m.name)} ${isMe ? "(Sen)" : ""}</div>
+                    <div class="text-[10px] font-bold text-orange-600">🔥 ${m.streak || 1} günlük seri</div>
+                  </div>
+                </div>
+                <div class="text-right shrink-0">
+                  <div class="text-sm font-black text-indigo-700">${formatNum(wTotal)}</div>
+                  <div class="text-[10px] text-slate-400 font-bold">7 gün toplam</div>
+                </div>
+              </div>
+              <div class="flex items-end gap-1 pt-0.5">${barsHtml}</div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function renderPedometerTab() {
+        if (!state.myProfile) return;
+        const steps = getEffectiveTodaySteps(state.myProfile);
+        const goal = state.myProfile.dailyGoal || DEFAULT_DAILY_GOAL;
+        const pct = Math.min(100, Math.round((steps / goal) * 100));
+        const circumference = 2 * Math.PI * 76;
+        const offset = circumference - (pct / 100) * circumference;
+
+        const ring = document.getElementById("step-ring-progress");
+        if (ring) ring.style.strokeDashoffset = String(offset);
+        document.getElementById("pedometer-step-count").textContent = formatNum(steps);
+        document.getElementById("pedometer-percent-label").textContent = `%${pct} tamamlandı`;
+        document.getElementById("pedometer-goal-pill").textContent = `Hedef: ${formatNum(goal)}`;
+        document.getElementById("metric-km").textContent = `${(steps * 0.00075).toFixed(2)} km`;
+        document.getElementById("metric-kcal").textContent = `${Math.round(steps * 0.04)} kcal`;
+        document.getElementById("metric-mins").textContent = `${Math.round(steps / 100)} dk`;
+        updateSensorUI();
+      }
+
+      function renderMissionsTab() {
+        if (!state.myProfile) return;
+        const steps = getEffectiveTodaySteps(state.myProfile);
+        const rankInfo = getRankInfo(state.myProfile.xp || 0);
+
+        document.getElementById("xp-rank-title").textContent = rankInfo.current.title;
+        document.getElementById("xp-level-badge").textContent = `Seviye ${rankInfo.current.level}`;
+        document.getElementById("xp-progress-bar").style.width = `${rankInfo.pct}%`;
+        document.getElementById("xp-points-label").textContent = `${formatNum(rankInfo.xp)} XP`;
+        document.getElementById("xp-next-label").textContent = rankInfo.next
+          ? `Sonraki: ${rankInfo.next.title} (${formatNum(rankInfo.next.minXp)} XP)`
+          : "En yüksek rütbedesin! 👑";
+
+        const dailyList = document.getElementById("daily-missions-list");
+        if (dailyList) {
+          dailyList.innerHTML = DAILY_MISSIONS.map((m) => {
+            const done = steps >= m.target;
+            const claimed = !!state.claimedTodayMissions[m.id];
+            const pct = Math.min(100, Math.round((steps / m.target) * 100));
+            return `
+              <div class="rounded-2xl p-3 border ${claimed ? "bg-emerald-50/70 border-emerald-200" : "bg-slate-50 border-slate-100"} flex items-center justify-between gap-2.5">
+                <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                  <span class="text-xl shrink-0">${m.emoji}</span>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-xs font-black text-slate-800">${m.title}</div>
+                    <div class="text-[11px] text-slate-500">${m.desc}</div>
+                    <div class="h-1.5 rounded-full bg-slate-200 mt-1.5 overflow-hidden">
+                      <div class="h-full rounded-full ${done ? "bg-emerald-500" : "bg-indigo-500"}" style="width:${pct}%"></div>
+                    </div>
+                  </div>
+                </div>
+                ${claimed
+                  ? `<span class="px-2.5 py-1.5 rounded-xl bg-emerald-100 text-emerald-700 text-[10px] font-black shrink-0">Alındı ✓</span>`
+                  : (done
+                    ? `<button type="button" data-claim-daily="${m.id}" class="claim-daily-btn px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black shrink-0 animate-pulse">+${m.xp} XP<br>+${m.coins} 🪙</button>`
+                    : `<span class="px-2 py-1.5 rounded-xl bg-slate-200 text-slate-600 text-[10px] font-extrabold text-center shrink-0">+${m.xp} XP<br>+${m.coins} 🪙</span>`)
+                }
+              </div>
+            `;
+          }).join("");
+        }
+
+        const miniList = document.getElementById("mini-missions-list");
+        if (miniList) {
+          miniList.innerHTML = MINI_MISSIONS.map((m) => {
+            const claimed = !!state.claimedTodayMissions[m.id];
+            return `
+              <div class="rounded-2xl p-3 border ${claimed ? "bg-emerald-50/70 border-emerald-200" : "bg-slate-50 border-slate-100"} flex items-center justify-between gap-2.5">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <span class="text-xl shrink-0">${m.emoji}</span>
+                  <div class="min-w-0">
+                    <div class="text-xs font-black text-slate-800">${m.title}</div>
+                    <div class="text-[11px] text-slate-500">${m.desc} (+${m.coins} 🪙)</div>
+                  </div>
+                </div>
+                ${claimed
+                  ? `<span class="px-2.5 py-1.5 rounded-xl bg-emerald-100 text-emerald-700 text-[10px] font-black shrink-0">Yapıldı ✓</span>`
+                  : `<button type="button" data-claim-mini="${m.id}" class="claim-mini-btn px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition text-white text-[11px] font-black shrink-0">Yaptım</button>`
+                }
+              </div>
+            `;
+          }).join("");
+        }
+      }
+
+      function renderBadgesTab() {
+        if (!state.myProfile) return;
+        const total = Math.max(getEffectiveTodaySteps(state.myProfile), Number(state.myProfile.totalSteps) || 0);
+        document.getElementById("stats-total-steps").textContent = `${formatNum(total)} adım`;
+        document.getElementById("stats-corridor").textContent = formatNum(Math.floor(total / 80));
+        document.getElementById("stats-tea").textContent = formatNum(Math.floor(total / 45));
+        document.getElementById("stats-streak").textContent = `${state.myProfile.streak || 1} gün`;
+
+        let unlocked = 0;
+        const grid = document.getElementById("badges-grid");
+        if (grid) {
+          grid.innerHTML = BADGES.map((b) => {
+            const ok = b.check(state.myProfile);
+            if (ok) unlocked++;
+            return `
+              <div class="rounded-2xl p-3 border ${ok ? "bg-indigo-50/70 border-indigo-200" : "bg-slate-50 border-slate-100 opacity-55 grayscale"} text-center space-y-1">
+                <div class="text-2xl">${b.emoji}</div>
+                <div class="text-xs font-black text-slate-800">${b.title}</div>
+                <div class="text-[10px] text-slate-500">${b.desc}</div>
+              </div>
+            `;
+          }).join("");
+        }
+        document.getElementById("badges-unlocked-count").textContent = `${unlocked} / ${BADGES.length}`;
+      }
+
+      function buildAvatarPickers() {
+        const av = state.draftAvatar || createRandomAvatar();
+        state.draftAvatar = av;
+        const preview = document.getElementById("avatar-editor-preview");
+        if (preview) preview.innerHTML = renderAvatarSVG(av, 112, false);
+
+        const renderSwatches = (elId, items, key) => {
+          const el = document.getElementById(elId);
+          if (!el) return;
+          el.innerHTML = items.map((color) => `
+            <button type="button" data-av-key="${key}" data-av-val="${color}"
+              class="av-pick-btn w-8 h-8 rounded-full border-2 transition ${av[key] === color ? "border-indigo-600 scale-110 ring-2 ring-indigo-200" : "border-white shadow-sm"}"
+              style="background-color:${color}"></button>
+          `).join("");
+        };
+
+        const renderPills = (elId, items, key) => {
+          const el = document.getElementById(elId);
+          if (!el) return;
+          el.innerHTML = items.map((item) => `
+            <button type="button" data-av-key="${key}" data-av-val="${item.id}"
+              class="av-pick-btn px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold border transition ${av[key] === item.id ? "bg-indigo-600 text-white border-indigo-600" : "bg-slate-50 text-slate-700 border-slate-200"}">
+              ${item.label}
+            </button>
+          `).join("");
+        };
+
+        renderSwatches("picker-skin", SKIN_TONES, "skin");
+        renderPills("picker-hair-style", HAIR_STYLES, "hairStyle");
+        renderSwatches("picker-hair-color", HAIR_COLORS, "hairColor");
+        renderSwatches("picker-shirt-color", SHIRT_COLORS, "shirtColor");
+        renderPills("picker-accessory", ACCESSORIES, "accessory");
+        renderPills("picker-expression", EXPRESSIONS, "expression");
+      }
+
+      function populateProfileEditorForm() {
+        if (!state.myProfile) return;
+        document.getElementById("profile-name-input").value = state.myProfile.name || "";
+        document.getElementById("profile-status-input").value = state.myProfile.statusText || "";
+        document.getElementById("profile-goal-input").value = state.myProfile.dailyGoal || DEFAULT_DAILY_GOAL;
+        document.getElementById("profile-room-input").value = state.myProfile.roomCode || DEFAULT_ROOM_CODE;
+        state.draftAvatar = { ...(state.myProfile.avatar || createRandomAvatar()) };
+        buildAvatarPickers();
+      }
+
+      function renderAllViews() {
+        renderHeader();
+        renderActiveDuelBanner();
+        renderRaceTrack();
+        renderMyRankBanner();
+        renderCheersFeed();
+        renderLeaderboard();
+        renderWeeklyView();
+        renderChatTab();
+        renderPedometerTab();
+        renderMissionsTab();
+        renderReceivedGiftsShowcase();
+        renderBadgesTab();
+        updateChatUnreadBadge();
+      }
+
+      function switchTab(tabName) {
+        state.activeTab = tabName;
+        ["race", "chat", "pedometer", "missions", "profile"].forEach((t) => {
+          document.getElementById(`tab-${t}`)?.classList.toggle("hidden", t !== tabName);
+        });
+        document.querySelectorAll(".nav-btn").forEach((btn) => {
+          const active = btn.getAttribute("data-tab") === tabName;
+          btn.className = active
+            ? "nav-btn relative flex flex-col items-center justify-center py-1 rounded-2xl text-indigo-600 font-extrabold transition bg-indigo-50/80"
+            : "nav-btn relative flex flex-col items-center justify-center py-1 rounded-2xl text-slate-400 font-bold transition";
+        });
+        if (tabName === "chat") {
+          state.lastReadChatTimestamp = Date.now();
+          renderChatTab(true);
+          updateChatUnreadBadge();
+        }
+        if (tabName === "profile") {
+          populateProfileEditorForm();
+          renderReceivedGiftsShowcase();
+          renderBadgesTab();
+        }
+      }
+
+      function openOnboardingModal() {
+        state.draftAvatar = createRandomAvatar();
+        const prev = document.getElementById("onboarding-avatar-preview");
+        if (prev) prev.innerHTML = renderAvatarSVG(state.draftAvatar, 84, false);
+        document.getElementById("onboarding-modal")?.classList.remove("hidden");
+      }
+
+      function openMemberActionModal(uid) {
+        const member = state.membersMap.get(uid);
+        if (!member || member.uid === state.userId) return;
+        state.selectedActionUid = uid;
+        document.getElementById("action-modal-avatar").innerHTML = renderAvatarSVG(member.avatar, 44, false);
+        document.getElementById("action-modal-name").textContent = member.name;
+        document.getElementById("action-modal-steps").textContent = `Bugün ${formatNum(getEffectiveTodaySteps(member))} adım`;
+        document.getElementById("member-action-modal")?.classList.remove("hidden");
+      }
+
+      // =========================================================================
+      // 10. OLAY DİNLEYİCİLERİ (EVENT LISTENERS)
+      // =========================================================================
+      function bindEventListeners() {
+        // Alt navigasyon
+        document.querySelectorAll(".nav-btn").forEach((btn) => {
+          btn.addEventListener("click", () => switchTab(btn.getAttribute("data-tab")));
+        });
+
+        // Header altın piline tıklayınca doğrudan Hediye Gönder penceresini aç
+        document.getElementById("header-coins-pill")?.addEventListener("click", () => openGiftModal());
+        document.getElementById("race-open-chat-btn")?.addEventListener("click", () => switchTab("chat"));
+        document.getElementById("race-open-gift-btn")?.addEventListener("click", () => openGiftModal());
+        document.getElementById("chat-top-gift-btn")?.addEventListener("click", () => openGiftModal());
+        document.getElementById("chat-bar-gift-btn")?.addEventListener("click", () => openGiftModal());
+
+        // Canlı Yarış / Haftalık Şampiyonluk alt sekmeleri
+        const dailyBtn = document.getElementById("subtab-daily-btn");
+        const weeklyBtn = document.getElementById("subtab-weekly-btn");
+        const dailyView = document.getElementById("race-daily-view");
+        const weeklyView = document.getElementById("race-weekly-view");
+        dailyBtn?.addEventListener("click", () => {
+          dailyView.classList.remove("hidden");
+          weeklyView.classList.add("hidden");
+          dailyBtn.className = "py-2 px-3 rounded-xl text-xs font-extrabold transition bg-white text-indigo-700 shadow-sm";
+          weeklyBtn.className = "py-2 px-3 rounded-xl text-xs font-extrabold transition text-slate-600 hover:text-slate-900";
+        });
+        weeklyBtn?.addEventListener("click", () => {
+          weeklyView.classList.remove("hidden");
+          dailyView.classList.add("hidden");
+          weeklyBtn.className = "py-2 px-3 rounded-xl text-xs font-extrabold transition bg-white text-indigo-700 shadow-sm";
+          dailyBtn.className = "py-2 px-3 rounded-xl text-xs font-extrabold transition text-slate-600 hover:text-slate-900";
+          renderWeeklyView();
+        });
+
+        // Profil alt sekmeleri (Karakterim / Hediyeler & Rozetler)
+        const avSubBtn = document.getElementById("subtab-avatar-btn");
+        const rewSubBtn = document.getElementById("subtab-rewards-btn");
+        const avView = document.getElementById("profile-avatar-view");
+        const rewView = document.getElementById("profile-rewards-view");
+        avSubBtn?.addEventListener("click", () => {
+          avView.classList.remove("hidden");
+          rewView.classList.add("hidden");
+          avSubBtn.className = "py-2 px-3 rounded-xl text-xs font-extrabold transition bg-white text-indigo-700 shadow-sm";
+          rewSubBtn.className = "py-2 px-3 rounded-xl text-xs font-extrabold transition text-slate-600 hover:text-slate-900";
+        });
+        rewSubBtn?.addEventListener("click", () => {
+          rewView.classList.remove("hidden");
+          avView.classList.add("hidden");
+          rewSubBtn.className = "py-2 px-3 rounded-xl text-xs font-extrabold transition bg-white text-indigo-700 shadow-sm";
+          avSubBtn.className = "py-2 px-3 rounded-xl text-xs font-extrabold transition text-slate-600 hover:text-slate-900";
+          renderReceivedGiftsShowcase();
+          renderBadgesTab();
+        });
+
+        // Sohbet Formu & Hızlı Mesajlar
+        document.getElementById("chat-form")?.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const inp = document.getElementById("chat-message-input");
+          if (!inp) return;
+          const val = inp.value.trim();
+          if (!val) return;
+          inp.value = "";
+          sendChatMessage(val);
+        });
+        document.querySelectorAll(".quick-chat-btn").forEach((btn) => {
+          btn.addEventListener("click", () => sendChatMessage(btn.getAttribute("data-quick-chat")));
+        });
+
+        // Hediye Gönder Modalı
+        document.getElementById("close-gift-modal-btn")?.addEventListener("click", () => {
+          document.getElementById("gift-modal")?.classList.add("hidden");
+        });
+        document.getElementById("confirm-send-gift-btn")?.addEventListener("click", async () => {
+          const targetUid = document.getElementById("gift-recipient-select")?.value || "ALL";
+          const note = document.getElementById("gift-note-input")?.value || "";
+          document.getElementById("gift-modal")?.classList.add("hidden");
+          await sendGift(targetUid, state.selectedGiftId, note);
+        });
+
+        // Pist tüm katılımcılar
+        document.getElementById("toggle-all-lanes-btn")?.addEventListener("click", () => {
+          state.showAllTrackLanes = !state.showAllTrackLanes;
+          renderRaceTrack();
+        });
+
+        // Sıralama arama
+        const searchIn = document.getElementById("leaderboard-search-input");
+        const clearSearchBtn = document.getElementById("clear-search-btn");
+        searchIn?.addEventListener("input", () => {
+          state.searchQuery = searchIn.value;
+          clearSearchBtn?.classList.toggle("hidden", !searchIn.value);
+          renderLeaderboard();
+        });
+        clearSearchBtn?.addEventListener("click", () => {
+          searchIn.value = "";
+          state.searchQuery = "";
+          clearSearchBtn.classList.add("hidden");
+          renderLeaderboard();
+        });
+
+        // Teşvik & Davet
+        document.getElementById("quick-cheer-all-btn")?.addEventListener("click", () => {
+          pushCheer("🔥 Ekip harika gidiyor, herkese bol adımlar!");
+          showToast("🔥 Tüm katılımcılara teşvik gönderildi!", "success");
+        });
+        document.getElementById("share-invite-btn")?.addEventListener("click", async () => {
+          const inviteMsg = `👟 Ofis Adım yarışına ve canlı sohbete katıl! Kişi sınırı olmadan hemen dahil ol (Sistem Kodu: ${state.roomCode})`;
+          try {
+            if (navigator.share) await navigator.share({ title: "Ofis Adım", text: inviteMsg });
+            else if (navigator.clipboard) {
+              await navigator.clipboard.writeText(inviteMsg);
+              showToast("📋 Davet mesajı kopyalandı!", "success");
+            }
+          } catch (err) {}
+        });
+
+        // Haftalık iddia
+        document.getElementById("edit-weekly-bet-btn")?.addEventListener("click", () => {
+          const ed = document.getElementById("weekly-bet-editor");
+          const inp = document.getElementById("weekly-bet-input");
+          if (ed && inp) {
+            inp.value = state.weeklyBet;
+            ed.classList.toggle("hidden");
+          }
+        });
+        document.getElementById("save-weekly-bet-btn")?.addEventListener("click", () => {
+          const inp = document.getElementById("weekly-bet-input");
+          if (inp) saveWeeklyBet(inp.value);
+          document.getElementById("weekly-bet-editor")?.classList.add("hidden");
+        });
+
+        // Adımsayar & Sensör
+        document.getElementById("toggle-sensor-btn")?.addEventListener("click", toggleStepSensor);
+        document.getElementById("toggle-bg-keepalive-btn")?.addEventListener("click", () => toggleBackgroundKeepAlive());
+        document.getElementById("sensitivity-slider")?.addEventListener("input", (e) => {
+          state.sensitivityLevel = Number(e.target.value) || 2;
+          const labels = { 1: "Düşük (Daha Az Hassas)", 2: "Orta (Önerilen)", 3: "Yüksek (Çok Hassas)" };
+          document.getElementById("sensitivity-label").textContent = labels[state.sensitivityLevel];
+        });
+        document.querySelectorAll(".quick-add-btn").forEach((btn) => {
+          btn.addEventListener("click", () => addStepsDelta(Number(btn.getAttribute("data-quick-add")) || 0));
+        });
+        document.getElementById("sync-manual-total-btn")?.addEventListener("click", () => {
+          const inp = document.getElementById("manual-total-input");
+          if (!inp || !state.myProfile) return;
+          const val = Math.floor(Number(inp.value));
+          if (isNaN(val) || val < 0) {
+            showToast("Geçerli bir adım sayısı girin.", "warning");
+            return;
+          }
+          const prevToday = getEffectiveTodaySteps(state.myProfile);
+          const diff = Math.max(0, val - prevToday);
+          const earnedCoins = Math.floor(diff / 10);
+          saveProfile({
+            ...state.myProfile,
+            todaySteps: val,
+            totalSteps: (Number(state.myProfile.totalSteps) || 0) + diff,
+            coins: (Number(state.myProfile.coins) || 0) + earnedCoins
+          });
+          inp.value = "";
+          showToast(`✅ Günlük adımın ${formatNum(val)} olarak eşitlendi!`, "success");
+        });
+
+        // Pil rehberi
+        document.getElementById("open-battery-guide-btn")?.addEventListener("click", () => {
+          if (state.nativeApkMode && window.AndroidStepBridge && typeof window.AndroidStepBridge.requestBatteryOptimization === "function") {
+            window.AndroidStepBridge.requestBatteryOptimization();
+            showToast("Android pil muafiyeti penceresi açıldı! 'İzin Ver' seçin 🔋", "info");
+          } else {
+            document.getElementById("battery-modal")?.classList.remove("hidden");
+          }
+        });
+        document.getElementById("close-battery-modal-btn")?.addEventListener("click", () => {
+          document.getElementById("battery-modal")?.classList.add("hidden");
+        });
+        document.getElementById("activate-all-protections-btn")?.addEventListener("click", async () => {
+          state.sensorManuallyPaused = false;
+          toggleBackgroundKeepAlive(true);
+          if (state.nativeApkMode && window.AndroidStepBridge && typeof window.AndroidStepBridge.requestBatteryOptimization === "function") {
+            window.AndroidStepBridge.requestBatteryOptimization();
+          }
+          await autoStartMotionSensor(true);
+          document.getElementById("battery-modal")?.classList.add("hidden");
+          showToast("⚡ Tüm sensör ve arka plan korumaları aktif!", "success");
+        });
+
+        // Şans Çarkı
+        document.getElementById("spin-wheel-btn")?.addEventListener("click", () => {
+          const pick = WHEEL_CHALLENGES[Math.floor(Math.random() * WHEEL_CHALLENGES.length)];
+          state.currentWheelChallenge = pick;
+          document.getElementById("wheel-emoji").textContent = pick.emoji;
+          document.getElementById("wheel-text").textContent = pick.text;
+          document.getElementById("complete-wheel-btn")?.classList.remove("hidden");
+          playChime();
+        });
+        document.getElementById("complete-wheel-btn")?.addEventListener("click", () => {
+          if (!state.currentWheelChallenge) return;
+          claimMissionReward("wheel_" + Date.now(), 120, 50, 150, "Şans Çarkı Görevi");
+          document.getElementById("complete-wheel-btn")?.classList.add("hidden");
+          document.getElementById("wheel-text").textContent = "Harika! İstersen tekrar çevirebilirsin 🎉";
+          state.currentWheelChallenge = null;
+        });
+
+        // Karakter Atölyesi & Profil Kayıt
+        document.getElementById("randomize-avatar-btn")?.addEventListener("click", () => {
+          state.draftAvatar = createRandomAvatar();
+          buildAvatarPickers();
+        });
+        document.getElementById("save-profile-btn")?.addEventListener("click", () => {
+          const name = (document.getElementById("profile-name-input")?.value || "").trim();
+          if (!name) {
+            showToast("Lütfen adını yaz!", "warning");
+            return;
+          }
+          saveProfile({
+            ...(state.myProfile || {}),
+            name,
+            statusText: (document.getElementById("profile-status-input")?.value || "").trim() || "Canlı yarışta! 👟",
+            dailyGoal: Number(document.getElementById("profile-goal-input")?.value) || DEFAULT_DAILY_GOAL,
+            roomCode: normalizeRoomCode(document.getElementById("profile-room-input")?.value || DEFAULT_ROOM_CODE),
+            avatar: { ...(state.draftAvatar || createRandomAvatar()) }
+          });
+          showToast("💾 Profilin ve karakterin güncellendi!", "success");
+          switchTab("race");
+        });
+
+        // Onboarding
+        document.getElementById("onboarding-random-avatar-btn")?.addEventListener("click", () => {
+          state.draftAvatar = createRandomAvatar();
+          document.getElementById("onboarding-avatar-preview").innerHTML = renderAvatarSVG(state.draftAvatar, 84, false);
+        });
+        document.getElementById("onboarding-join-btn")?.addEventListener("click", async () => {
+          const name = (document.getElementById("onboarding-name-input")?.value || "").trim();
+          if (!name) {
+            showToast("Başlamak için adını yazmalısın 😊", "warning");
+            return;
+          }
+          document.getElementById("onboarding-modal")?.classList.add("hidden");
+          await saveProfile({
+            name,
+            roomCode: DEFAULT_ROOM_CODE,
+            statusText: "Sisteme yeni katıldım! 🚀",
+            dailyGoal: DEFAULT_DAILY_GOAL,
+            todaySteps: 0,
+            totalSteps: 0,
+            xp: 50,
+            coins: STARTER_COINS,
+            giftsSent: 0,
+            streak: 1,
+            avatar: { ...(state.draftAvatar || createRandomAvatar()) }
+          });
+          launchConfetti();
+          playChime();
+          pushCheer(`👋 ${name} canlı adım sistemine katıldı!`);
+          showToast(`🚀 Hoş geldin ${name}! +${STARTER_COINS} 🪙 hediye altının hazır.`, "success");
+          await autoStartMotionSensor(true);
+        });
+
+        // Katılımcı İşlem Modalı
+        document.getElementById("close-action-modal-btn")?.addEventListener("click", () => {
+          document.getElementById("member-action-modal")?.classList.add("hidden");
+        });
+        document.getElementById("open-gift-for-member-btn")?.addEventListener("click", () => {
+          const targetUid = state.selectedActionUid;
+          document.getElementById("member-action-modal")?.classList.add("hidden");
+          openGiftModal(targetUid);
+        });
+        document.querySelectorAll(".send-cheer-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const member = state.membersMap.get(state.selectedActionUid);
+            if (!member) return;
+            pushCheer(btn.getAttribute("data-cheer"), member.name);
+            document.getElementById("member-action-modal")?.classList.add("hidden");
+            showToast(`📣 ${member.name} için teşvik gönderildi!`, "success");
+          });
+        });
+        document.getElementById("start-duel-modal-btn")?.addEventListener("click", () => {
+          const member = state.membersMap.get(state.selectedActionUid);
+          if (member) startDuelWith(member);
+          document.getElementById("member-action-modal")?.classList.add("hidden");
+        });
+
+        // Önizleme Test Butonları
+        document.getElementById("add-demo-member-btn")?.addEventListener("click", () => {
+          const names = ["Ayşe M.", "Emre K.", "Gizem Ö.", "Kerem V.", "Merve Ç.", "Oğuzhan T.", "Pınar D."];
+          const count = state.visibleMembers.length + 1;
+          const randomName = names[count % names.length] + ` #${count}`;
+          const uid = "sim_" + Date.now();
+          const steps = 1200 + Math.floor(Math.random() * 7500);
+          const today = getTodayKey();
+          state.membersMap.set(uid, {
+            uid,
+            name: randomName,
+            roomCode: state.roomCode,
+            statusText: "Sohbete ve yarışa geldim! 👟",
+            dailyGoal: DEFAULT_DAILY_GOAL,
+            todaySteps: steps,
+            totalSteps: steps * 4,
+            xp: 180 + Math.floor(Math.random() * 500),
+            coins: 250,
+            streak: 1 + Math.floor(Math.random() * 5),
+            lastActiveDate: today,
+            weeklyHistory: { [today]: steps },
+            avatar: createRandomAvatar(),
+            updatedAt: Date.now()
+          });
+          persistLocalRoomData();
+          rebuildVisibleMembers();
+          renderAllViews();
+          showToast(`🎉 ${randomName} sisteme eklendi!`, "success");
+        });
+
+        document.getElementById("sim-incoming-gift-btn")?.addEventListener("click", () => {
+          if (!state.myProfile) return;
+          const gift = GIFT_CATALOG[Math.floor(Math.random() * GIFT_CATALOG.length)];
+          const sender = state.visibleMembers.find((m) => m.uid !== state.userId) || { uid: "demo_1", name: "Zeynep K.", avatar: createRandomAvatar() };
+          const incoming = {
+            id: "gift_sim_" + Date.now(),
+            type: "gift",
+            roomCode: state.roomCode,
+            fromUid: sender.uid,
+            fromName: sender.name,
+            fromAvatar: sender.avatar,
+            targetUid: state.userId,
+            targetName: state.myProfile.name,
+            giftId: gift.id,
+            giftEmoji: gift.emoji,
+            giftName: gift.name,
+            giftBonusXp: gift.bonusXp,
+            text: "Adımların efsane, bunu hak ettin!",
+            createdAt: Date.now()
+          };
+          state.messages = [...state.messages, incoming].slice(-100);
+          persistLocalRoomData();
+          checkIncomingGiftsForMe();
+          renderChatTab();
+          renderReceivedGiftsShowcase();
+          updateChatUnreadBadge();
+        });
+
+        // Delegasyonlu tıklamalar
+        document.addEventListener("click", (e) => {
+          const pickBtn = e.target.closest(".av-pick-btn");
+          if (pickBtn) {
+            const key = pickBtn.getAttribute("data-av-key");
+            const val = pickBtn.getAttribute("data-av-val");
+            if (state.draftAvatar && key) {
+              state.draftAvatar[key] = val;
+              buildAvatarPickers();
+            }
+            return;
+          }
+
+          const giftBtn = e.target.closest(".select-gift-btn");
+          if (giftBtn) {
+            state.selectedGiftId = giftBtn.getAttribute("data-select-gift");
+            renderGiftModalContent(document.getElementById("gift-recipient-select")?.value || "");
+            return;
+          }
+
+          const actionBtn = e.target.closest(".open-member-action-btn");
+          if (actionBtn) {
+            openMemberActionModal(actionBtn.getAttribute("data-open-member"));
+            return;
+          }
+
+          const claimDaily = e.target.closest(".claim-daily-btn");
+          if (claimDaily) {
+            const mission = DAILY_MISSIONS.find((x) => x.id === claimDaily.getAttribute("data-claim-daily"));
+            if (mission) claimMissionReward(mission.id, mission.xp, mission.coins, 0, mission.title);
+            return;
+          }
+
+          const claimMini = e.target.closest(".claim-mini-btn");
+          if (claimMini) {
+            const mission = MINI_MISSIONS.find((x) => x.id === claimMini.getAttribute("data-claim-mini"));
+            if (mission) claimMissionReward(mission.id, mission.xp, mission.coins, mission.bonusSteps, mission.title);
+          }
+        });
+
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") {
+            if (state.bgKeepAliveEnabled) requestWakeLockSafe();
+            if (state.nativeApkMode && window.AndroidStepBridge && typeof window.AndroidStepBridge.getTodaySteps === "function") {
+              window.onNativeStepsUpdate(window.AndroidStepBridge.getTodaySteps(), "HARDWARE_STEP_COUNTER");
+            }
+          }
+        });
+      }
+
+      // =========================================================================
+      // 11. BAŞLATMA (INIT)
+      // =========================================================================
+      async function initApp() {
+        loadClaimedState();
+        bindEventListeners();
+
+        try {
+          if ("BroadcastChannel" in window) {
+            state.broadcastChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+            state.broadcastChannel.onmessage = (ev) => {
+              if (!state.cloudEnabled && ev.data && ev.data.type === "ROOM_SYNC" && ev.data.roomCode === state.roomCode) {
+                const p = ev.data.payload;
+                if (p && Array.isArray(p.members)) {
+                  state.membersMap.clear();
+                  p.members.forEach((m) => state.membersMap.set(m.uid, m));
+                  if (Array.isArray(p.cheers)) state.cheers = p.cheers;
+                  if (Array.isArray(p.duels)) state.duels = p.duels;
+                  if (Array.isArray(p.messages)) state.messages = p.messages;
+                  if (p.weeklyBet) state.weeklyBet = p.weeklyBet;
+                  rebuildVisibleMembers();
+                  checkIncomingGiftsForMe();
+                  renderAllViews();
+                }
+              }
+            };
+          }
+        } catch (err) {}
+
+        const cloudReady = await initCloudBackend();
+
+        let existingProfile = null;
+        if (cloudReady && state.fb) {
+          try {
+            const { db, doc, getDoc } = state.fb;
+            const snap = await getDoc(doc(db, "artifacts", APP_ID, "public", "data", "ofis_members", state.userId));
+            if (snap.exists()) existingProfile = { ...snap.data(), uid: state.userId };
+          } catch (err) {}
+        }
+
+        if (!existingProfile) {
+          try {
+            const localSaved = JSON.parse(localStorage.getItem(LOCAL_PROFILE_STORAGE_KEY) || "null");
+            if (localSaved && localSaved.name) {
+              if (!cloudReady && localSaved.uid) state.userId = localSaved.uid;
+              existingProfile = { ...localSaved, uid: state.userId };
+            }
+          } catch (err) {}
+        }
+
+        if (existingProfile && existingProfile.name) {
+          state.roomCode = normalizeRoomCode(existingProfile.roomCode || DEFAULT_ROOM_CODE);
+          state.myProfile = existingProfile;
+          state.draftAvatar = { ...(existingProfile.avatar || createRandomAvatar()) };
+          subscribeToRoomData();
+          populateProfileEditorForm();
+          renderAllViews();
+        } else {
+          subscribeToRoomData();
+          renderAllViews();
+          openOnboardingModal();
+        }
+
+        const isNative = initNativeAndroidBridge();
+        if (!isNative) {
+          initBackgroundWorker();
+          await autoStartMotionSensor(false);
+        }
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initApp);
+      } else {
+        initApp();
+      }
+    })();
+  </script>
+</body>
+</html>
