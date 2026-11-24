@@ -1,36 +1,33 @@
+name: Ofis Adim APK Derle
+
 on:
-push:
-branches: [ main, master ]
-workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-build-apk:
-runs-on: ubuntu-latest
-steps:
-# 1. Depodaki Android proje dosyalarını indirir
-- name: Kaynak Kodlari Al
-uses: actions/checkout@v4
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kaynak Kodlari Al
+        uses: actions/checkout@v4
 
-  # 2. Android Gradle derlemesi için Java 17 kurar
-  - name: Java 17 Kur
-    uses: actions/setup-java@v4
-    with:
-      distribution: 'temurin'
-      java-version: '17'
+      - name: Java 17 Kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-  # 3. Gradle 8.7 sürümünü hazırlar
-  - name: Gradle 8.7 Kur
-    uses: gradle/actions/setup-gradle@v4
-    with:
-      gradle-version: '8.7'
+      - name: Gradle 8.7 Kur
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
 
-  # 4. Kurulabilir Android .apk paketini derler
-  - name: OfisAdim.apk Derle
-    run: gradle assembleDebug
+      - name: OfisAdim.apk Derle
+        run: gradle assembleDebug
 
-  # 5. Oluşan .apk dosyasını indirilebilir paket olarak sunar
-  - name: APK Dosyasini Indirilebilir Olarak Yukle
-    uses: actions/upload-artifact@v4
-    with:
-      name: OfisAdim-APK
-      path: app/build/outputs/apk/debug/app-debug.apk
+      - name: APK Dosyasini Indirilebilir Olarak Yukle
+        uses: actions/upload-artifact@v4
+        with:
+          name: OfisAdim-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
